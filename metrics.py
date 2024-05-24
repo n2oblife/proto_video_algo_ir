@@ -7,9 +7,27 @@ from scipy.ndimage import gaussian_filter
 from scipy.signal import convolve2d
 
 
+def init_metrics()->dict[str, list]:
+    """
+    Initialize a dictionary to store various image quality metrics.
 
+    Returns:
+        dict: A dictionary with keys for different metrics, each initialized to an empty list.
+              The keys include "mse", "psnr", "roughness", "ssim", "cei", "entropy",
+              "edge_preservation", and "nmse".
+    """
+    return {
+        "mse": [],
+        "psnr": [],
+        "roughness": [],
+        "ssim": [],
+        "cei": [],
+        "entropy": [],
+        "edge_preservation": [],
+        "nmse": []
+        }
 
-def calculate_mse(original:np.ndarray, enhanced:np.ndarray):
+def calculate_mse(original:np.ndarray, enhanced:np.ndarray)->float:
     """
     Calculate the Mean Squared Error (MSE) between two images.
     A basic but useful metric for comparing the difference between 
@@ -25,7 +43,7 @@ def calculate_mse(original:np.ndarray, enhanced:np.ndarray):
     return np.mean((original - enhanced) ** 2)
 
 
-def calculate_psnr(original:np.ndarray, enhanced:np.ndarray, max_pixel = 255.0):
+def calculate_psnr(original:np.ndarray, enhanced:np.ndarray, max_pixel = 255.0)->float:
     """
     Calculate the Peak Signal-to-Noise Ratio (PSNR) between two images.
     This measures the ratio between the maximum possible power of a signal 
@@ -52,7 +70,7 @@ def calculate_psnr(original:np.ndarray, enhanced:np.ndarray, max_pixel = 255.0):
     return 20 * np.log10(max_pixel / np.sqrt(mse))
 
 
-def calculate_ssim(img1:np.ndarray, img2:np.ndarray, sigma=1.5, L=255):
+def calculate_ssim(img1:np.ndarray, img2:np.ndarray, sigma=1.5, L=255)->float:
     """
     Compute the Structural Similarity Index (SSIM) between two images.
     This metric compares the similarity between two images, considering 
@@ -96,7 +114,7 @@ def calculate_ssim(img1:np.ndarray, img2:np.ndarray, sigma=1.5, L=255):
 
     return np.mean(numerator / denominator)
 
-def calculate_cei(original:np.ndarray, enhanced:np.ndarray):
+def calculate_cei(original:np.ndarray, enhanced:np.ndarray)->float:
     """
     Calculate the Contrast Enhancement Index (CEI) between two images.
     Measures the improvement in contrast, which is often crucial for infrared imagery.
@@ -117,7 +135,7 @@ def calculate_cei(original:np.ndarray, enhanced:np.ndarray):
     return enhanced_contrast / original_contrast
 
 
-def calculate_entropy(image:np.ndarray):
+def calculate_entropy(image:np.ndarray)->float |np.ndarray:
     """
     Calculate the entropy of an image.
     Measures the amount of information or detail in the image. 
@@ -173,7 +191,7 @@ def calculate_nrmse(original:np.ndarray, enhanced:np.ndarray)->float:
     return nrmse(original, enhanced)
 
 
-def estimate_kernels(image:np.ndarray):
+def estimate_kernels(image:np.ndarray)->tuple[np.ndarray, np.ndarray]:
     """
     Estimate the column difference kernel (h) and the row difference kernel (hT)
     from an enhanced image using gradient-based methods.
@@ -189,15 +207,9 @@ def estimate_kernels(image:np.ndarray):
     horizontal_gradient = filters.sobel_h(image)
     vertical_gradient = filters.sobel_v(image)
     
-    # Approximate column difference kernel (h) from horizontal gradient
-    h = np.array([[0, 0, 0], [-1, 1, 0], [0, 0, 0]])
-    
-    # Approximate row difference kernel (hT) from vertical gradient (transposed)
-    hT = h.T
-    
-    return h, hT
+    return horizontal_gradient, vertical_gradient
 
-def calculate_roughness(image:np.ndarray):
+def calculate_roughness(image:np.ndarray)->float:
     """
     Calculate the roughness of an image to evaluate streak non-uniform noise.
 
@@ -225,3 +237,20 @@ def calculate_roughness(image:np.ndarray):
     roughness = (norm_hI * norm_hTI) / norm_I
     
     return roughness
+
+def compute_metrics(
+        original:list|np.ndarray,
+        enhanced:list|np.ndarray,
+        max_px = 255
+    )->dict[str, list]:
+    metrics = init_metrics()
+    for frame in frames:
+        metrics["mse"].append(calculate_mse(original, enhanced)) 
+        metrics["psnr"].append(calculate_psnr(original, enhanced, max_px)) 
+        metrics["roughness"].append(calculate_roughness(enhanced)) 
+        metrics["ssim"].append(calculate_ssim(original, enhanced)) 
+        metrics["cei"].append(calculate_cei(original, enhanced)) 
+        metrics["entropy"].append(calculate_entropy(enhanced)) 
+        metrics["edge_preservation"].append(calculate_edge_preservation(original, enhanced)) 
+        metrics["nmse"].append(calculate_nrmse(original, enhanced))
+    return metrics
