@@ -243,7 +243,7 @@ def var_filtering(
         image (list | np.ndarray): The input image as a 2D list or array.
         i (int): The row index of the target pixel around which the kernel is built.
         j (int): The column index of the target pixel around which the kernel is built.
-        k_size (int, optional): The size of the kernel (half-width). Defaults to 3.
+        k_size (int, optional): The size of the kernel). Defaults to 3.
 
     Returns:
         float: The variance of the values within the kernel. If the image is smaller than the kernel size, 
@@ -254,3 +254,24 @@ def var_filtering(
         return np.var(kernel_im)
     else:
         return np.var(image)
+    
+def cardinal_filtering(image: list|np.ndarray, i:int, j:int, k_size = 3)->float:
+    """
+    Apply a mean like filter to the current image.
+
+    Args:
+        image (list | np.ndarray): The input image as a 2D list or array.
+        i (int): The row index of the target pixel around which the kernel is built.
+        j (int): The column index of the target pixel around which the kernel is built.
+        k_size (int, optional): The size of the kernel. Defaults to 3.
+    
+    Returns:
+        float: Cardinal filtering result
+    """
+    if len(image) > k_size:
+        kernel_im = build_kernel(image, i, j, k_size)
+        return kernel_im[1][1]-0.25*(kernel_im[0][0] + kernel_im[0][2] + kernel_im[2][0] + kernel_im[2][2])
+    elif  len(image) == k_size: 
+        return image[1][1]-0.25*(image[0][0] + image[0][2] + image[2][0] + image[2][2])
+    else:
+        return TypeError("The shape of the image must be at least of 3x3")
