@@ -84,53 +84,6 @@ def gauss_kernel(x, y, sig=1):
     """
     return 1/(2*np.pi*sig**2) * np.exp(-(x**2 + y**2) / (2*sig**2))
 
-def kernel_gaussian_filtering(
-        image:list|np.ndarray, 
-        i:int=0, j:int=0, sig=1., k_size=3
-    ):
-    """
-    Apply a Gaussian filter to a specific pixel in an image.
-
-    Args:
-        image (np.ndarray): The input image as a NumPy array.
-        i (int): The row index of the target pixel.
-        j (int): The column index of the target pixel.
-        sig (float, optional): The standard deviation for the Gaussian filter. Defaults to 1.
-        k_size (int, optional): The size of the kernel. Defaults to 3.
-
-    Returns:
-        np.ndarray: The filtered value of the target pixel.
-    """
-    if len(image) > k_size:
-        kernel_im = build_kernel(image, i, j, k_size)
-        kernel_im_ = rm_None(kernel_im)
-        return gaussian_filter(kernel_im_, sig)
-    else:
-        image_ = rm_None(image)
-        return gaussian_filter(image_, sig)
-    
-def frame_gaussian_filtering(
-        image: list | np.ndarray,
-        sig=1.,
-        k_size=3
-    ) -> np.ndarray:
-    """
-    Apply Gaussian filtering to a given image using a specified kernel size.
-
-    Args:
-        image (list | np.ndarray): The input image to be filtered. It can be a list or a numpy array.
-        sig (float, optional): The standard deviation for the Gaussian filter. Defaults to 1.
-        k_size (int, optional): The size of the kernel used for local mean calculation. Defaults to 3.
-
-    Returns:
-        np.ndarray: The filtered image with the same dimensions as the input image.
-    """
-    filter_img = np.zeros(image.shape, dtype=image.dtype)
-    for i in range(len(image)):
-        for j in range(len(image[0])):
-            filter_img[i][j] = kernel_gaussian_filtering(image, i, j, sig, k_size)
-    return filter_img
-
 
 def kernel_uniform_filtering(
         image:list|np.ndarray, 
@@ -537,3 +490,47 @@ def frame_cardinal_filtering(
             filter_img[i][j] = kernel_cardinal_filtering(image, i, j, k_size)
     return filter_img
 
+
+def kernel_mad_filtering(
+        image: list|np.ndarray,
+        i:int=0, j:int=0, k_size=3
+    ) -> float:
+    """
+    Calculate the mean absolute deviation (MAD) of a kernel (submatrix) from an image centered around a specific pixel.
+
+    Args:
+        image (list | np.ndarray): The input image as a 2D list or array.
+        i (int): The row index of the target pixel around which the kernel is built.
+        j (int): The column index of the target pixel around which the kernel is built.
+        k_size (int, optional): The size of the kernel. Defaults to 3.
+
+    Returns:
+        float: The mean absolute deviation of the values within the kernel.
+    """
+    if len(image) > k_size:
+        kernel_im = build_kernel(image, i, j, k_size)
+        kernel_im_ = rm_None(kernel_im)
+        return np.mean(np.abs(kernel_im_ - np.mean(kernel_im_)))
+    else:
+        image_ = rm_None(image)
+        return np.mean(np.abs(image_ - np.mean(image_)))
+
+def frame_mad_filtering(
+        image: list | np.ndarray,
+        k_size=3
+    ) -> np.ndarray:
+    """
+    Apply mean absolute deviation (MAD) filtering to a given image using a specified kernel size.
+
+    Args:
+        image (list | np.ndarray): The input image to be filtered. It can be a list or a numpy array.
+        k_size (int, optional): The size of the kernel used for local MAD calculation. Defaults to 3.
+
+    Returns:
+        np.ndarray: The filtered image with the same dimensions as the input image.
+    """
+    filter_img = np.zeros(image.shape, dtype=image.dtype)
+    for i in range(len(image)):
+        for j in range(len(image[0])):
+            filter_img[i][j] = kernel_mad_filtering(image, i, j, k_size)
+    return filter_img

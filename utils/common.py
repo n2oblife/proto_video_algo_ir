@@ -81,7 +81,7 @@ def Yij(frame: list | np.ndarray):
 
 
 
-def error(Xest: float | np.ndarray, target: float | np.ndarray) -> float | np.ndarray:
+def compute_error(Xest: float | np.ndarray, target: float | np.ndarray) -> float | np.ndarray:
     """
     Calculate the error between the estimated and target values.
 
@@ -92,7 +92,7 @@ def error(Xest: float | np.ndarray, target: float | np.ndarray) -> float | np.nd
     Returns:
         float | np.ndarray: The difference between the estimated and target values.
     """
-    return Xest - target
+    return np.abs(Xest - target)
 
 def loss(Xest: list | np.ndarray, target: list | np.ndarray) -> float | np.ndarray:
     """
@@ -105,12 +105,14 @@ def loss(Xest: list | np.ndarray, target: list | np.ndarray) -> float | np.ndarr
     Returns:
         float | np.ndarray: The sum of squared errors between the estimated and target values.
     """
-    return np.sum(error(Xest, target)**2)
+    return np.sum(compute_error(Xest, target)**2)
 
 
 def sgd_step(coeff: float | np.ndarray, lr: float | np.ndarray, delta: float | np.ndarray, bias: float | np.ndarray = 0) -> float | np.ndarray:
     """
     Perform a single step of stochastic gradient descent (SGD) to update a coefficient.
+
+    -> updated_coeff = coeff - lr * delta + bias
 
     Args:
         coeff (float | np.ndarray): The current value of the coefficient.
@@ -127,6 +129,8 @@ def Xest(g: float | np.ndarray, y: float | np.ndarray, o: float | np.ndarray, b:
     """
     Estimate a value using a linear combination of inputs and an optional bias.
 
+    -> estimated_value = g * y + o + b
+
     Args:
         g (float | np.ndarray): The first input value or coefficient.
         y (float | np.ndarray): The second input value or coefficient.
@@ -137,3 +141,31 @@ def Xest(g: float | np.ndarray, y: float | np.ndarray, o: float | np.ndarray, b:
         float | np.ndarray: The estimated value resulting from the linear combination of the inputs and the bias.
     """
     return g * y + o + b
+
+def exp_window(
+        new_val:float|np.ndarray, 
+        smoothed:float|np.ndarray,
+        alpha:float=0.5
+    )->float|np.ndarray:
+    """
+    Update a smoothed value using exponential weighting.
+
+    The updated smoothed value is computed as:
+        S_n = alpha * X_n + (1 - alpha) * S_n-1
+
+    Best alpha : (smoothed - new_val)**2 to be minimized.
+
+    Args:
+        new_val (float | np.ndarray): The new value to incorporate into the smoothed value.
+        smoothed (float | np.ndarray): The current smoothed value.
+        alpha (float): The exponential weighting factor. Default is 0.5
+
+    Returns:
+        float | np.ndarray: The updated smoothed value.
+    """
+    if 0 < alpha < 1:
+        # less computation : smoothed + alpha*(new_val - smoothed)
+        return alpha*new_val + (1-alpha)*smoothed
+    else:
+        raise ValueError("Alpha value must be between 0 and 1.")
+

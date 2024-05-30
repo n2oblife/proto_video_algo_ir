@@ -13,9 +13,6 @@ def update():
 def estimate():
     return
 
-def compute_error():
-    return
-
 def metrics():
     return
 
@@ -26,7 +23,7 @@ if __name__ == "__main__":
     args = build_args()
     frames = load_frames(args)
     frame_est_SBNUCIRFPA = SBNUCIRFPA(frames[:args['num_frames']])
-    frames_target = frame_mean_filtering(frames[:args['num_frames']-1])
+    frame_target = frame_mean_filtering(frames[args['num_frames']-1])
     # frame_est_AdaSBNUCIRFPA = AdaSBNUCIRFPA(frames[:args['num_frames']])
     if args['show_video']:
         print(" --- Showing estimation --- ")

@@ -215,7 +215,7 @@ def AdaSBNUCIRFPA_reg(frames: list | np.ndarray, K: float | np.ndarray = 1., alp
 def AdaSBNUCIRFPA_reg_frame(
         frame: list | np.ndarray, 
         coeffs: dict, coeffs_n_1: dict, 
-        K: float | np.ndarray = 1., alpha: float | np.ndarray = 0.4, 
+        K: float | np.ndarray = 0.1, alpha: float | np.ndarray = 0.4, 
         k_size=3 , offset_only = True
     ) -> tuple[list | np.ndarray, dict, dict]:
     """
