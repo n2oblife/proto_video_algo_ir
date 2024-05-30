@@ -1,5 +1,6 @@
 # MAP estimator for simulataneous superresolution and detector NUC
 # MAPessdNUC
+### too much computation
 
 import numpy as np
 

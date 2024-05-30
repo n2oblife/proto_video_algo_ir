@@ -53,7 +53,11 @@ class ParserOptions:
         self.default = default
         self.dest = dest
         self.help = help
-        self.metavar = metavar
+        # means the input doesn't need an argument => no metavar
+        if action == "store_true":
+            self.metavar = None
+        else :
+            self.metavar = metavar
         self.nargs = nargs
         self.required = required
         self.type = type
@@ -201,6 +205,97 @@ def add_argument_to_parser(parser, option: ParserOptions):
     else:
         parser.add_argument(f'--{option.long}', **args)
 
+def build_args():
+    """
+    Build and parse command-line arguments for the program.
+
+    This function creates a dict of parser options for the command-line arguments
+    required by the program. The arguments are parsed and returned.
+
+    Arguments : folder_path, width, height, depth, num_frames, framerate
+    Flags : show_video
+
+    Returns:
+        Namespace: A namespace containing the parsed arguments.
+    """
+    parser_options = []  # Initialize an empty list to store parser options
+
+    # Add parser option for the folder path containing binary files of the video
+    parser_options.append(ParserOptions(
+        long="folder_path",
+        short="p",
+        help="The path to the folder containing all the binary files of the video",
+        required=True  # This argument is required
+    ))
+
+    # Add parser option for the width of the video
+    parser_options.append(ParserOptions(
+        long="width",
+        short="w",
+        type=int,
+        default=640,  # Default width is set to 640
+        help="The width of the video",
+        required=True  # This argument is required
+    ))
+
+    # Add parser option for the height of the video
+    parser_options.append(ParserOptions(
+        long="height",
+        short="he",
+        type=int,
+        default=480,  # Default height is set to 480
+        help="The height of the video",
+        required=True  # This argument is required
+    ))
+
+    # Add parser option for the bit depth of the video
+    parser_options.append(ParserOptions(
+        long="depth",
+        short="d",
+        type=str,
+        default="8b",  # Default bit depth is set to 8 bits
+        help="The bits' depth of the video",
+        choices=['8b', '14b', '16b', '32b', '64b', '128b', '256b'],  # Allowed choices for bit depth
+        required=True  # This argument is required
+    ))
+
+    # Add parser option for showing the video or not
+    parser_options.append(ParserOptions(
+        long="show_video",
+        short="s",
+        action='store_true',  # This makes it a boolean flag
+        help="Show the video if this flag is set"
+    ))
+
+    # Add parser option for the number of frames to compute
+    parser_options.append(ParserOptions(
+        long="num_frames",
+        short="n",
+        type=int,
+        default=None,  # Default is None, which means process all frames
+        help="The number of frames to compute"
+    ))
+
+    # Add parser option for the framerate per second
+    parser_options.append(ParserOptions(
+        long="framerate",
+        short="fps",
+        type=float,
+        default=60,  # Default framerate is set to 60 FPS
+        help="The framerate per second for displaying the video"
+    ))
+
+    # TODO add algorithm options
+    # Placeholder for adding additional parser options related to algorithm choices
+
+    # Parse the input arguments using the defined parser options
+    args = parse_input(
+        parser_config=parser_options,
+        prog_name="IR SBNUC prototypes"  # Program name for the parser
+    )
+
+    print(" --- Input parsed --- ")  # Indicate that input has been successfully parsed
+    return args  # Return the parsed arguments
 
 
 def animate(stop_event, messages):

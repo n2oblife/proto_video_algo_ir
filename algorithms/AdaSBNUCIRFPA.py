@@ -1,10 +1,12 @@
 # Adaptive scene-based non-uniformity correction method for infrared focal plane arrays
 # AdaSBNUCIRFPA (paper)
 
-from ..common import *
-from ..target import *
+import numpy as np
+from tqdm import tqdm
+from utils.common import *
+from utils.target import *
 
-def SBNUCIRFPA(frames: list | np.ndarray, eta: float | np.ndarray = 0.01, k_size=3) -> list | np.ndarray:
+def SBNUCIRFPA(frames: list | np.ndarray, eta: float | np.ndarray = 0.01, k_size=3, offset_only=True) -> np.ndarray:
     """
     Apply the scene-based non-uniformity correction (SBNUC) method to a sequence of frames.
 
@@ -15,21 +17,23 @@ def SBNUCIRFPA(frames: list | np.ndarray, eta: float | np.ndarray = 0.01, k_size
         frames (list | np.ndarray): A list or array of frames to be corrected.
         eta (float | np.ndarray, optional): The learning rate for updating coefficients. Defaults to 0.01.
         k_size (int, optional): The size of the kernel (half-width) used for local estimation. Defaults to 3.
-
+        offset_only (bool, optional): Whether to only update the offset coefficient. Defaults to True.
+        
     Returns:
         list | np.ndarray: A list or array of corrected frames.
     """
     all_frame_est = []  # List to store estimated (corrected) frames
     coeffs = init_nuc(frames[0])  # Initialize coefficients based on the first frame
-    for frame in frames:
-        frame_est, coeffs = SBNUCIRFPA_frame(frame, coeffs, eta, k_size)
+    
+    # Use tqdm to show progress while iterating through frames
+    for frame in tqdm(frames, desc="SBNUCIRFPA processing", unit="frame"):
+        frame_est, coeffs = SBNUCIRFPA_frame(frame, coeffs, eta, k_size, offset_only)
         all_frame_est.append(frame_est)
-    if isinstance(frames, np.ndarray):
-        return np.array(all_frame_est)
-    else:
-        return all_frame_est
+    
+    print(f"{len(all_frame_est)} frames estimated using SBNUCIRFPA algo")
+    return np.array(all_frame_est, dtype=frames[0].dtype)
 
-def SBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, eta: float | np.ndarray = 0.01, k_size=3) -> tuple[list | np.ndarray, dict]:
+def SBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, eta: float | np.ndarray = 0.01, k_size=3, offset_only = True) -> tuple[list | np.ndarray, dict]:
     """
     Apply the SBNUC method to a single frame.
 
@@ -41,17 +45,24 @@ def SBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, eta: float | np.nda
         coeffs (dict): The coefficients used for the correction.
         eta (float | np.ndarray, optional): The learning rate for updating coefficients. Defaults to 0.01.
         k_size (int, optional): The size of the kernel (half-width) used for local estimation. Defaults to 3.
+        offset_only (bool, optional): Whether to only update the offset coefficient. Defaults to True.
 
     Returns:
         tuple[list | np.ndarray, dict]: The corrected frame and updated coefficients.
     """
     all_Xest = []  # List to store estimated pixel values for the frame
-    if isinstance(frame, np.ndarray):
-        pass  # Placeholder for potential numpy-specific implementation
-    else:
-        for i in range(len(frame)):
-            all_Xest.append([])  # Initialize row for estimated values
-            for j in range(len(frame[0])):
+    for i in range(len(frame)):
+        all_Xest.append([])  # Initialize row for estimated values
+        for j in range(len(frame[0])):
+            if offset_only:
+                # Update coefficients based on local kernel around the pixel
+                _ , coeffs["o"][i][j] = SBNUCIRFPA_update_nuc(
+                    build_kernel(frame, i, j, k_size), 
+                    coeffs["g"][i][j], 
+                    coeffs["o"][i][j],
+                    eta
+                )
+            else:
                 # Update coefficients based on local kernel around the pixel
                 coeffs["g"][i][j], coeffs["o"][i][j] = SBNUCIRFPA_update_nuc(
                     build_kernel(frame, i, j, k_size), 
@@ -59,9 +70,9 @@ def SBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, eta: float | np.nda
                     coeffs["o"][i][j],
                     eta
                 )
-                # Estimate corrected pixel value
-                all_Xest[i].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
-    return all_Xest, coeffs
+            # Estimate corrected pixel value
+            all_Xest[i].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
+    return np.array(all_Xest, dtype=frame.dtype), coeffs
 
 def SBNUCIRFPA_update_nuc(subframe: list | np.ndarray, g: float | np.ndarray, o: float | np.ndarray, eta: float | np.ndarray = 0.01, bias_g: float | np.ndarray = 0, bias_o: float | np.ndarray = 0) -> tuple[float | np.ndarray, float | np.ndarray]:
     """
@@ -84,12 +95,12 @@ def SBNUCIRFPA_update_nuc(subframe: list | np.ndarray, g: float | np.ndarray, o:
     # Get central pixel of the subframe
     yij = Yij(subframe)
     # Compute target function and error compared to it
-    T = mean_filtering(subframe)
+    T = kernel_mean_filtering(subframe)
     e = T - Xest(g, yij, o)
     # Update coefficients using SGD
     return sgd_step(g, eta, e * yij, bias_g), sgd_step(o, eta, e, bias_o)
 
-def AdaSBNUCIRFPA(frames: list | np.ndarray, K: float | np.ndarray = 1., k_size=3) -> list | np.ndarray:
+def AdaSBNUCIRFPA(frames: list | np.ndarray, K: float | np.ndarray = 1., k_size=3, offset_only=True) -> np.ndarray:
     """
     Apply the adaptive SBNUC method to a sequence of frames.
 
@@ -100,21 +111,24 @@ def AdaSBNUCIRFPA(frames: list | np.ndarray, K: float | np.ndarray = 1., k_size=
         frames (list | np.ndarray): A list or array of frames to be corrected.
         K (float | np.ndarray, optional): The regularization parameter. Defaults to 1.
         k_size (int, optional): The size of the kernel (half-width) used for local estimation. Defaults to 3.
+        offset_only (bool, optional): Whether to only update the offset coefficient. Defaults to True.
 
     Returns:
         list | np.ndarray: A list or array of corrected frames.
     """
     all_frame_est = []  # List to store estimated (corrected) frames
     coeffs = init_nuc(frames[0])  # Initialize coefficients based on the first frame
-    for frame in frames:
-        frame_est, coeffs = AdaSBNUCIRFPA_frame(frame, coeffs, K, k_size)
-        all_frame_est.append(frame_est)
-    if isinstance(frames, np.ndarray):
-        return np.array(all_frame_est)
-    else:
-        return all_frame_est
 
-def AdaSBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, K: float | np.ndarray = 1., k_size=3) -> tuple[list | np.ndarray, dict]:
+    # Use tqdm to show progress while iterating through frames
+    for frame in tqdm(frames, desc="SBNUCIRFPA processing", unit="frame"):
+        frame_est, coeffs = AdaSBNUCIRFPA_frame(frame, coeffs, K, k_size, offset_only)
+        all_frame_est.append(frame_est)
+    
+    print(f"{len(all_frame_est)} frames estimated using AdaSBNUCIRFPA algo")
+    return np.array(all_frame_est, frames[0].dtype)
+
+
+def AdaSBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, K: float | np.ndarray = 1., k_size=3, offset_only = True) -> tuple[list | np.ndarray, dict]:
     """
     Apply the adaptive SBNUC method to a single frame.
 
@@ -126,19 +140,26 @@ def AdaSBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, K: float | np.nd
         coeffs (dict): The coefficients used for the correction.
         K (float | np.ndarray, optional): The regularization parameter. Defaults to 1.
         k_size (int, optional): The size of the kernel (half-width) used for local estimation. Defaults to 3.
+        offset_only (bool, optional): Whether to only update the offset coefficient. Defaults to True.
 
     Returns:
         tuple[list | np.ndarray, dict]: The corrected frame and updated coefficients.
     """
     all_Xest = []  # List to store estimated pixel values for the frame
-    if isinstance(frame, np.ndarray):
-        pass  # Placeholder for potential numpy-specific implementation
-    else:
-        for i in range(len(frame)):
-            all_Xest.append([])  # Initialize row for estimated values
-            for j in range(len(frame[0])):
-                subframe = build_kernel(frame, i, j, k_size)  # Extract local kernel around the pixel
-                eta = AdaSBNUCIRFPA_eta(K, subframe)  # Calculate adaptive learning rate
+    for i in range(len(frame)):
+        all_Xest.append([])  # Initialize row for estimated values
+        for j in range(len(frame[0])):
+            subframe = build_kernel(frame, i, j, k_size)  # Extract local kernel around the pixel
+            eta = AdaSBNUCIRFPA_eta(K, subframe)  # Calculate adaptive learning rate
+            if offset_only:
+                # Update coefficients based on local kernel and adaptive learning rate
+                _ , coeffs["o"][i][j] = SBNUCIRFPA_update_nuc(
+                    subframe, 
+                    coeffs["g"][i][j], 
+                    coeffs["o"][i][j],
+                    eta
+                )
+            else:
                 # Update coefficients based on local kernel and adaptive learning rate
                 coeffs["g"][i][j], coeffs["o"][i][j] = SBNUCIRFPA_update_nuc(
                     subframe, 
@@ -146,9 +167,9 @@ def AdaSBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, K: float | np.nd
                     coeffs["o"][i][j],
                     eta
                 )
-                # Estimate corrected pixel value
-                all_Xest[i].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
-    return all_Xest, coeffs
+            # Estimate corrected pixel value
+            all_Xest[i].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
+    return np.array(all_Xest, dtype=frame.dtype), coeffs
 
 def AdaSBNUCIRFPA_eta(K: float, subframe: list | np.ndarray) -> float:
     """
@@ -164,7 +185,7 @@ def AdaSBNUCIRFPA_eta(K: float, subframe: list | np.ndarray) -> float:
     Returns:
         float: The adaptive learning rate.
     """
-    var = var_filtering(subframe)
+    var = kernel_var_filtering(subframe)
     return K / (1 + var**2)
 
 def AdaSBNUCIRFPA_reg(frames: list | np.ndarray, K: float | np.ndarray = 1., alpha: float | np.ndarray = 0.4, k_size=3) -> list | np.ndarray:
@@ -189,12 +210,14 @@ def AdaSBNUCIRFPA_reg(frames: list | np.ndarray, K: float | np.ndarray = 1., alp
     for frame in frames:
         frame_est, coeffs, coeffs_n_1 = AdaSBNUCIRFPA_reg_frame(frame, coeffs, coeffs_n_1, K, alpha, k_size)
         all_frame_est.append(frame_est)
-    if isinstance(frames, np.ndarray):
-        return np.array(all_frame_est)
-    else:
-        return all_frame_est
+    return np.array(all_frame_est, dtype=frames[0])
 
-def AdaSBNUCIRFPA_reg_frame(frame: list | np.ndarray, coeffs: dict, coeffs_n_1: dict, K: float | np.ndarray = 1., alpha: float | np.ndarray = 0.4, k_size=3) -> tuple[list | np.ndarray, dict, dict]:
+def AdaSBNUCIRFPA_reg_frame(
+        frame: list | np.ndarray, 
+        coeffs: dict, coeffs_n_1: dict, 
+        K: float | np.ndarray = 1., alpha: float | np.ndarray = 0.4, 
+        k_size=3 , offset_only = True
+    ) -> tuple[list | np.ndarray, dict, dict]:
     """
     Apply the adaptive SBNUC method with regularization to a single frame.
 
@@ -209,27 +232,35 @@ def AdaSBNUCIRFPA_reg_frame(frame: list | np.ndarray, coeffs: dict, coeffs_n_1: 
         K (float | np.ndarray, optional): The regularization parameter. Defaults to 1.
         alpha (float | np.ndarray, optional): The regularization weight. Defaults to 0.4.
         k_size (int, optional): The size of the kernel (half-width) used for local estimation. Defaults to 3.
+        offset_only (bool, optional): Whether to only update the offset coefficient. Defaults to True.
 
     Returns:
         tuple[list | np.ndarray, dict, dict]: The corrected frame, updated coefficients, and updated previous frame coefficients.
     """
     all_Xest = []  # List to store estimated pixel values for the frame
-    if isinstance(frame, np.ndarray):
-        pass  # Placeholder for potential numpy-specific implementation
-    else:
-        for i in range(len(frame)):
-            all_Xest.append([])  # Initialize row for estimated values
-            for j in range(len(frame[0])):
-                subframe = build_kernel(frame, i, j, k_size)  # Extract local kernel around the pixel
-                eta = AdaSBNUCIRFPA_eta(K, subframe)  # Calculate adaptive learning rate
+    for i in range(len(frame)):
+        all_Xest.append([])  # Initialize row for estimated values
+        for j in range(len(frame[0])):
+            subframe = build_kernel(frame, i, j, k_size)  # Extract local kernel around the pixel
+            eta = AdaSBNUCIRFPA_eta(K, subframe)  # Calculate adaptive learning rate
 
-                # Swap the values of the previous frame coefficients with the current ones
-                g_n_1 = coeffs_n_1["g"][i][j]
-                o_n_1 = coeffs_n_1["o"][i][j]
-                coeffs_n_1["g"][i][j] = coeffs["g"][i][j]
-                coeffs_n_1["o"][i][j] = coeffs["o"][i][j]
+            # Swap the values of the previous frame coefficients with the current ones
+            g_n_1 = coeffs_n_1["g"][i][j]
+            o_n_1 = coeffs_n_1["o"][i][j]
+            coeffs_n_1["g"][i][j] = coeffs["g"][i][j]
+            coeffs_n_1["o"][i][j] = coeffs["o"][i][j]
 
-                # Update the coefficients using the subframe, learning rate, and regularization term
+            # Update the coefficients using the subframe, learning rate, and regularization term
+            if offset_only :
+                _ , coeffs["o"][i][j] = SBNUCIRFPA_update_nuc(
+                    subframe, 
+                    coeffs["g"][i][j], 
+                    coeffs["o"][i][j],
+                    eta,
+                    alpha * (coeffs["g"][i][j] - g_n_1),
+                    alpha * (coeffs["o"][i][j] - o_n_1)
+                )
+            else :
                 coeffs["g"][i][j], coeffs["o"][i][j] = SBNUCIRFPA_update_nuc(
                     subframe, 
                     coeffs["g"][i][j], 
@@ -239,6 +270,6 @@ def AdaSBNUCIRFPA_reg_frame(frame: list | np.ndarray, coeffs: dict, coeffs_n_1: 
                     alpha * (coeffs["o"][i][j] - o_n_1)
                 )
 
-                # Estimate corrected pixel value
-                all_Xest[i].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
-    return all_Xest, coeffs, coeffs_n_1
+            # Estimate corrected pixel value
+            all_Xest[i].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
+    return np.array(all_Xest, dtype=frame.dtype), coeffs, coeffs_n_1

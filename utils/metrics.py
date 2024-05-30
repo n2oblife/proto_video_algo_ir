@@ -5,7 +5,7 @@ from skimage.metrics import normalized_root_mse as nrmse
 from skimage import filters
 from scipy.ndimage import gaussian_filter
 from scipy.signal import convolve2d
-
+from tqdm import tqdm
 
 def init_metrics()->dict[str, list]:
     """
@@ -218,7 +218,7 @@ def calculate_roughness(image:np.ndarray)->float:
 
     Returns:
         float: The roughness value of the image.
-    """    
+    """ 
     # Define the column difference kernel (h) and the row difference kernel (hT)
     h, hT = estimate_kernels(image)
 
@@ -239,18 +239,36 @@ def calculate_roughness(image:np.ndarray)->float:
     return roughness
 
 def compute_metrics(
-        original:list|np.ndarray,
-        enhanced:list|np.ndarray,
-        max_px = 255
-    )->dict[str, list]:
+        original_frames: list | np.ndarray,
+        enhanced_frames: list | np.ndarray,
+        max_px=255
+    ) -> dict[str, list]:
+    """
+    Compute various image quality metrics for each pair of original and enhanced frames.
+
+    Args:
+        original_frames (list | np.ndarray): The original frames.
+        enhanced_frames (list | np.ndarray): The enhanced frames.
+        max_px (int, optional): The maximum pixel value for PSNR calculation. Defaults to 255.
+
+    Returns:
+        dict[str, list]: A dictionary containing lists of metric values for each frame.
+    """
     metrics = init_metrics()
-    for frame in frames:
-        metrics["mse"].append(calculate_mse(original, enhanced)) 
-        metrics["psnr"].append(calculate_psnr(original, enhanced, max_px)) 
-        metrics["roughness"].append(calculate_roughness(enhanced)) 
-        metrics["ssim"].append(calculate_ssim(original, enhanced)) 
-        metrics["cei"].append(calculate_cei(original, enhanced)) 
-        metrics["entropy"].append(calculate_entropy(enhanced)) 
-        metrics["edge_preservation"].append(calculate_edge_preservation(original, enhanced)) 
-        metrics["nmse"].append(calculate_nrmse(original, enhanced))
+    for i in tqdm(range(len(enhanced_frames)), desc="Computing metrics", unit="frame"):
+        
+        # Check if array is already 2D and squeeze it if shape is (w, h, 1)
+        if original_frames[i].ndim == 3 and original_frames[i].shape[2] == 1:
+            temp_original = np.squeeze(original_frames[i], axis=-1)
+        if enhanced_frames[i].ndim == 3 and enhanced_frames[i].shape[2] == 1:
+            temp_enhanced = np.squeeze(enhanced_frames[i], axis=-1)
+        
+        metrics["mse"].append(calculate_mse(temp_original, temp_enhanced))
+        metrics["psnr"].append(calculate_psnr(temp_original, temp_enhanced, max_px))
+        metrics["roughness"].append(calculate_roughness(temp_enhanced))
+        metrics["ssim"].append(calculate_ssim(temp_original, temp_enhanced))
+        metrics["cei"].append(calculate_cei(temp_original, temp_enhanced))
+        metrics["entropy"].append(calculate_entropy(temp_enhanced))
+        metrics["edge_preservation"].append(calculate_edge_preservation(temp_original, temp_enhanced))
+        metrics["nmse"].append(calculate_nrmse(temp_original, temp_enhanced))
     return metrics

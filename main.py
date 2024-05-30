@@ -1,5 +1,8 @@
-from cv2_video_computation import *
-from interract import *
+from utils.cv2_video_computation import *
+from utils.interract import *
+from utils.metrics import *
+from utils.target import *
+from algorithms.AdaSBNUCIRFPA import AdaSBNUCIRFPA, SBNUCIRFPA
 
 def init():
     return
@@ -16,67 +19,24 @@ def compute_error():
 def metrics():
     return
 
-def load_frames(show=False):
-    parser_options = []
-
-    parser_options.append(ParserOptions(
-        long="folder_path",
-        short="p",
-        help="The path to the folder containing all the binary files of the video",
-        required=True
-    ))
-
-    parser_options.append(ParserOptions(
-        long="width",
-        short="w",
-        type=int,
-        default=640,
-        help="The width of the video",
-        required=True
-    ))
-
-    parser_options.append(ParserOptions(
-        long="height",
-        short="he",
-        type=int,
-        default=480,
-        help="The height of the video",
-        required=True
-    ))
-
-    parser_options.append(ParserOptions(
-        long="depth",
-        short="d",
-        type=str,
-        default="8b",
-        help="The bits' depth of video",
-        choices=['8b', '14b', '16b', '32b', '64b', '128b', '256b'],
-        required=True
-    ))
-
-    # TODO add algorithm options
-
-    args = parse_input(
-        parser_config=parser_options,
-        prog_name="IR SBNUC prototypes"
-    )
-
-    print("Input parsed")
-
-    frames = store_video_from_bin(
-        folder_path=args['folder_path'],
-        width=args['width'],
-        height=args['height'],
-        channels=1,
-        depth=args['depth']
-    )
-
-    print(f"{len(frames)} frames stored")
-
-    if show:
-        show_video(frames, equalize=True, frame_rate=60)
-    return frames
+# python main.py -p C:/Users/zKanit/Pictures/sbnuc_offset -w 640 -he 480 -d 14b --show_video
     
 if __name__ == "__main__":
     set_logging_info()
-    frames = load_frames(show=True)
+    args = build_args()
+    frames = load_frames(args)
+    frame_est_SBNUCIRFPA = SBNUCIRFPA(frames[:args['num_frames']])
+    frames_target = frame_mean_filtering(frames[:args['num_frames']-1])
+    # frame_est_AdaSBNUCIRFPA = AdaSBNUCIRFPA(frames[:args['num_frames']])
+    if args['show_video']:
+        print(" --- Showing estimation --- ")
+        show_video(frames=frame_est_SBNUCIRFPA, title="SBNUCIRFPA", frame_rate=args['framerate'])
+        # show_video(frames=frame_est_AdaSBNUCIRFPA, title="AdaSBNUCIRFPA", frame_rate=args['framerate'])
+
+    breakpoint()
+    metrics = compute_metrics(original_frames=frames_target,
+                              enhanced_frames=frame_est_SBNUCIRFPA
+                              )
+
+    print(f"metrics : {metrics}")
+    print("DONE!")
