@@ -169,3 +169,21 @@ def exp_window(
     else:
         raise ValueError("Alpha value must be between 0 and 1.")
 
+
+def reshape_array(_array: np.ndarray) -> np.ndarray:
+    """
+    This function checks if the input array is 3-dimensional with a shape of (w, h, 1).
+    If so, it removes the singleton dimension and returns a 2D array.
+    Otherwise, it returns the original array unchanged.
+
+    Args:
+        _array (np.ndarray): The input array, which can be either 2D or 3D.
+
+    Returns:
+        np.ndarray: The resized 2D array if the original array had a shape of (w, h, 1),
+                    otherwise the original array.
+    """
+    if _array.ndim == 3 and _array.shape[2] == 1:
+        return np.squeeze(_array, axis=-1)
+    else:
+        return _array

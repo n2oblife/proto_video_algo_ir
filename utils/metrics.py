@@ -6,6 +6,7 @@ from skimage import filters
 from scipy.ndimage import gaussian_filter
 from scipy.signal import convolve2d
 from tqdm import tqdm
+from utils.common import reshape_array
 
 def init_metrics()->dict[str, list]:
     """
@@ -258,10 +259,13 @@ def compute_metrics(
     for i in tqdm(range(len(enhanced_frames)), desc="Computing metrics", unit="frame"):
         
         # Check if array is already 2D and squeeze it if shape is (w, h, 1)
-        if original_frames[i].ndim == 3 and original_frames[i].shape[2] == 1:
-            temp_original = np.squeeze(original_frames[i], axis=-1)
-        if enhanced_frames[i].ndim == 3 and enhanced_frames[i].shape[2] == 1:
-            temp_enhanced = np.squeeze(enhanced_frames[i], axis=-1)
+        temp_original = reshape_array(original_frames[i])
+        temp_enhanced = reshape_array(enhanced_frames[i])
+
+        # if original_frames[i].ndim == 3 and original_frames[i].shape[2] == 1:
+        #     temp_original = np.squeeze(original_frames[i], axis=-1)
+        # if enhanced_frames[i].ndim == 3 and enhanced_frames[i].shape[2] == 1:
+        #     temp_enhanced = np.squeeze(enhanced_frames[i], axis=-1)
         
         metrics["mse"].append(calculate_mse(temp_original, temp_enhanced))
         metrics["psnr"].append(calculate_psnr(temp_original, temp_enhanced, max_px))

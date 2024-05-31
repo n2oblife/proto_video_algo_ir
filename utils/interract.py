@@ -285,8 +285,30 @@ def build_args():
         help="The framerate per second for displaying the video"
     ))
 
-    # TODO add algorithm options
-    # Placeholder for adding additional parser options related to algorithm choices
+    # TODO work on handling of multiple algorithms at same time in motion estimation and work
+    # Add parser option for the nuc adaptation algorithm
+    parser_options.append(ParserOptions(
+        long="nuc_algorithm", 
+        short="nuc", 
+        type=str, 
+        default='SBNUCIRFPA',
+        nargs='+', 
+        choices=['OptFlow', 'BlockMotion', 'FourierShift'], 
+        help="Algorithms to use for nuc adaptation (can specify multiple)", 
+        required=True
+    ))
+
+    # Add parser option for the motion estimation algorithm
+    parser_options.append(ParserOptions(
+        long="motion_algorithm", 
+        short="m", 
+        type=str,
+        default='FourierShift', 
+        nargs='+', 
+        choices=['OptFlow', 'BlockMotion', 'FourierShift'], 
+        help="Algorithms to use for motion estimation (can specify multiple)", 
+        required=True
+    ))
 
     # Parse the input arguments using the defined parser options
     args = parse_input(

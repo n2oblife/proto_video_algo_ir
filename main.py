@@ -16,12 +16,16 @@ def estimate():
 def metrics():
     return
 
-# python main.py -p C:/Users/zKanit/Pictures/sbnuc_offset -w 640 -he 480 -d 14b --show_video
+# python main.py -p C:/Users/zKanit/Pictures/sbnuc_offset -w 640 -he 480 -d 14b -fps 1 -n 60 --show_video
     
 if __name__ == "__main__":
+
+    # Help : if pb with cv2 : reshape array and convert dtype to uint8
+
     set_logging_info()
     args = build_args()
     frames = load_frames(args)
+    breakpoint()
     frame_est_SBNUCIRFPA = SBNUCIRFPA(frames[:args['num_frames']])
     frame_target = frame_mean_filtering(frames[args['num_frames']-1])
     # frame_est_AdaSBNUCIRFPA = AdaSBNUCIRFPA(frames[:args['num_frames']])
