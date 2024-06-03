@@ -3,6 +3,27 @@ from motion.fourier_shift import *
 from skvideo.motion import blockMotion
 import numpy as np
 
+def build_motion_algo_dict():
+    """
+    Build a dictionary mapping algorithm names to their corresponding functions.
+
+    This function creates and returns a dictionary where the keys are the names of different
+    motion estimation algorithms, and the values are the functions that implement these algorithms.
+
+    Returns:
+        dict: A dictionary mapping algorithm names (str) to their corresponding functions.
+              The available algorithms are:
+              -> 'OptFlow': Function for optical flow estimation
+              -> 'BlockMotion': Function for block-based motion estimation
+              -> 'FourierShift': Function for Fourier shift estimation
+    """
+    return {
+        'OptFlow': OptFlow_estimation,      # Optical flow estimation function
+        'BlockMotion': blockMotion,         # Block-based motion estimation function
+        'FourierShift': fourier_shift,      # Fourier shift estimation function
+    }
+
+
 def motion_estimation(frames: np.ndarray, algo: str| list[str] = 'OptFlow') -> np.ndarray:
     """
     Estimate motion vectors between consecutive frames in a video sequence using a specified algorithm.
@@ -17,11 +38,7 @@ def motion_estimation(frames: np.ndarray, algo: str| list[str] = 'OptFlow') -> n
                     consecutive frames according to the specified algorithm.
     """
     # Dictionary mapping algorithm names to their corresponding functions
-    algos = {
-        'OptFlow': OptFlow_estimation,      # Optical flow estimation function
-        'BlockMotion': blockMotion,         # Block-based motion estimation function
-        'FourierShift': fourier_shift,      # Fourier shift estimation function
-    }
+    algos = build_motion_algo_dict()
 
     # TODO finish multiple handling
 

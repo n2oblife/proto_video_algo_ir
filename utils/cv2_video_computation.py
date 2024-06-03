@@ -250,6 +250,12 @@ def show_video(frames:list|np.ndarray|cv2.Mat, title='frames', frame_rate=30, eq
     # Close all the frames
     cv2.destroyAllWindows()
 
+def showing_all_estimated(estimated_frames, framerate):
+    for algo, frames in estimated_frames:
+        show_video(frames=frames, 
+                   title=algo,
+                   frame_rate=framerate)
+
 def load_frames(args: dict) -> list:
     """
     Load frames from a binary video file and optionally display them.

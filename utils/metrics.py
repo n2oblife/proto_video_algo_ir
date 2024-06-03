@@ -239,40 +239,81 @@ def calculate_roughness(image:np.ndarray)->float:
     
     return roughness
 
-def compute_metrics(
+def apply_metrics(
         original_frames: list | np.ndarray,
         enhanced_frames: list | np.ndarray,
+        to_compute: list[str] = ['mse', 'psnr'],
         max_px=255
     ) -> dict[str, list]:
     """
-    Compute various image quality metrics for each pair of original and enhanced frames.
+    Compute specified image quality metrics for each pair of original and enhanced frames.
 
     Args:
         original_frames (list | np.ndarray): The original frames.
         enhanced_frames (list | np.ndarray): The enhanced frames.
+        to_compute (list[str]): List of metrics to compute.
         max_px (int, optional): The maximum pixel value for PSNR calculation. Defaults to 255.
 
     Returns:
         dict[str, list]: A dictionary containing lists of metric values for each frame.
     """
-    metrics = init_metrics()
+    # Initialize metrics dictionary
+    metrics = {metric: [] for metric in to_compute}
+
+    # Define available metrics functions
+    metric_functions = {
+        "mse": calculate_mse,
+        "psnr": lambda original, enhanced: calculate_psnr(original, enhanced, max_px),
+        "roughness": calculate_roughness,
+        "ssim": calculate_ssim,
+        "cei": calculate_cei,
+        "entropy": calculate_entropy,
+        "edge_preservation": calculate_edge_preservation,
+        "nmse": calculate_nrmse
+    }
+
+    # Iterate through frames and compute the specified metrics
     for i in tqdm(range(len(enhanced_frames)), desc="Computing metrics", unit="frame"):
-        
-        # Check if array is already 2D and squeeze it if shape is (w, h, 1)
+        # Reshape arrays if necessary
         temp_original = reshape_array(original_frames[i])
         temp_enhanced = reshape_array(enhanced_frames[i])
 
-        # if original_frames[i].ndim == 3 and original_frames[i].shape[2] == 1:
-        #     temp_original = np.squeeze(original_frames[i], axis=-1)
-        # if enhanced_frames[i].ndim == 3 and enhanced_frames[i].shape[2] == 1:
-        #     temp_enhanced = np.squeeze(enhanced_frames[i], axis=-1)
-        
-        metrics["mse"].append(calculate_mse(temp_original, temp_enhanced))
-        metrics["psnr"].append(calculate_psnr(temp_original, temp_enhanced, max_px))
-        metrics["roughness"].append(calculate_roughness(temp_enhanced))
-        metrics["ssim"].append(calculate_ssim(temp_original, temp_enhanced))
-        metrics["cei"].append(calculate_cei(temp_original, temp_enhanced))
-        metrics["entropy"].append(calculate_entropy(temp_enhanced))
-        metrics["edge_preservation"].append(calculate_edge_preservation(temp_original, temp_enhanced))
-        metrics["nmse"].append(calculate_nrmse(temp_original, temp_enhanced))
+        # Compute each specified metric and store the results
+        for metric in to_compute:
+            if metric in metric_functions:
+                metrics[metric].append(metric_functions[metric](temp_original, temp_enhanced))
+            else:
+                raise ValueError(f"Metric '{metric}' is not recognized.")
+
     return metrics
+
+def metrics_estimated(
+        estimated_frames: dict[str, list], 
+        og_frames: np.ndarray, 
+        to_compute: list[str] = ['mse', 'psnr'], 
+        max_px=255
+    ) -> dict[str, dict[str, list]]:
+    """
+    Compute specified image quality metrics for each pair of original and enhanced frames 
+    across different algorithms.
+
+    Args:
+        estimated_frames (dict[str, list]): A dictionary where keys are algorithm names and values 
+                                            are lists of enhanced frames.
+        og_frames (np.ndarray): The original frames.
+        to_compute (list[str]): A list of metric names to compute.
+        max_px (int, optional): The maximum pixel value for PSNR calculation. Defaults to 255.
+
+    Returns:
+        dict[str, dict[str, list]]: A dictionary where keys are algorithm names and values are 
+                                    dictionaries containing metric values for each frame.
+    """
+    all_metrics = {}  # Dictionary to store metrics for each algorithm
+
+    # Iterate over each algorithm and its corresponding enhanced frames
+    for algo, enhanced_frames in estimated_frames.items():
+        # Compute metrics for the current algorithm's enhanced frames
+        all_metrics[algo] = apply_metrics(og_frames, enhanced_frames, to_compute, max_px)
+
+    print(f"Metrics : {all_metrics}")
+    return all_metrics

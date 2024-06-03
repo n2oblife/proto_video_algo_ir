@@ -9,10 +9,24 @@ from typing import Union, List, Any
 from copy import deepcopy
 
 
-def set_logging_info(mode='default')->None:
-    if mode=='default':
-        logging.basicConfig(level=logging.INFO,format='%(levelname)s - %(message)s')
+def set_logging_info(mode='default') -> None:
+    """
+    Set up logging configuration for the application.
+
+    Args:
+        mode (str, optional): The mode of logging. Defaults to 'default'.
+                              Currently, only 'default' mode is supported.
+
+    Returns:
+        None
+    """
+    if mode == 'default':
+        # Configure logging with INFO level and a simple format
+        logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
+        
+        # Ignore warnings to avoid cluttering the output
         warnings.simplefilter("ignore")
+
 
 class ParserOptions:
     def __init__(self, 
@@ -293,7 +307,8 @@ def build_args():
         type=str, 
         default='SBNUCIRFPA',
         nargs='+', 
-        choices=['OptFlow', 'BlockMotion', 'FourierShift'], 
+        choices=['SBNUCIRFPA', 'AdaSBNUCIRFPA', 'AdaSBNUCIRFPA_reg',
+                 'CstStatSBNUC', 'SBNUCLMS', 'SBNUCif_reg', 'AdaSBNUCif_reg'], 
         help="Algorithms to use for nuc adaptation (can specify multiple)", 
         required=True
     ))
@@ -301,12 +316,23 @@ def build_args():
     # Add parser option for the motion estimation algorithm
     parser_options.append(ParserOptions(
         long="motion_algorithm", 
-        short="m", 
+        short="mota", 
         type=str,
         default='FourierShift', 
-        nargs='+', 
+        nargs='+',
         choices=['OptFlow', 'BlockMotion', 'FourierShift'], 
         help="Algorithms to use for motion estimation (can specify multiple)", 
+        required=True
+    ))
+
+    parser_options.append(ParserOptions(
+        long="metrics", 
+        short="m", 
+        type=str, 
+        default=['mse', 'psnr'],  # Default metrics to compute
+        nargs='+', 
+        choices=['mse', 'psnr', 'roughness', 'ssim', 'cei', 'entropy', 'edge_preservation', 'nmse'], 
+        help="Metrics to compute (can specify multiple)", 
         required=True
     ))
 
