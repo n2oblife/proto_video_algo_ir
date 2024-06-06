@@ -142,33 +142,6 @@ def Xest(g: float | np.ndarray, y: float | np.ndarray, o: float | np.ndarray, b:
     """
     return g * y + o + b
 
-def exp_window(
-        new_val:float|np.ndarray, 
-        smoothed:float|np.ndarray,
-        alpha:float=0.5
-    )->float|np.ndarray:
-    """
-    Update a smoothed value using exponential weighting.
-
-    The updated smoothed value is computed as:
-        S_n = alpha * X_n + (1 - alpha) * S_n-1
-
-    Best alpha : (smoothed - new_val)**2 to be minimized.
-
-    Args:
-        new_val (float | np.ndarray): The new value to incorporate into the smoothed value.
-        smoothed (float | np.ndarray): The current smoothed value.
-        alpha (float): The exponential weighting factor. Default is 0.5
-
-    Returns:
-        float | np.ndarray: The updated smoothed value.
-    """
-    if 0 < alpha < 1:
-        # less computation : smoothed + alpha*(new_val - smoothed)
-        return alpha*new_val + (1-alpha)*smoothed
-    else:
-        raise ValueError("Alpha value must be between 0 and 1.")
-
 
 def reshape_array(_array: np.ndarray) -> np.ndarray:
     """

@@ -1,0 +1,11 @@
+# Configuration settings for the application
+
+com: com99
+baudrate: 115200
+fps: 30
+log_file: log\temperature.log
+
+alpha: 1    # thermal resistance coefficient
+beta: 1     # scale constant
+G: 10       # FPA thermal conductivity
+R0: 10      # default microbolometer resistance

@@ -171,7 +171,7 @@ def AdaSBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, K: float | np.nd
             all_Xest[i].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
     return np.array(all_Xest, dtype=frame.dtype), coeffs
 
-def AdaSBNUCIRFPA_eta(K: float, subframe: list | np.ndarray) -> float:
+def AdaSBNUCIRFPA_eta(K: float, subframe: list | np.ndarray, A=1.) -> float:
     """
     Calculate the adaptive learning rate (eta) for SBNUC.
 
@@ -181,12 +181,13 @@ def AdaSBNUCIRFPA_eta(K: float, subframe: list | np.ndarray) -> float:
     Args:
         K (float): The regularization parameter.
         subframe (list | np.ndarray): The subframe for which the learning rate is being calculated.
+        A (float, optional): normalization value. Default is 1. 
 
     Returns:
         float: The adaptive learning rate.
     """
     var = kernel_var_filtering(subframe)
-    return K / (1 + var**2)
+    return K / (1 + A*(var**2))
 
 def AdaSBNUCIRFPA_reg(frames: list | np.ndarray, K: float | np.ndarray = 1., alpha: float | np.ndarray = 0.4, k_size=3) -> list | np.ndarray:
     """

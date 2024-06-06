@@ -8,7 +8,6 @@ from functools import wraps
 from typing import Union, List, Any
 from copy import deepcopy
 
-
 def set_logging_info(mode='default') -> None:
     """
     Set up logging configuration for the application.
@@ -299,6 +298,15 @@ def build_args():
         help="The framerate per second for displaying the video"
     ))
 
+    # Add parser option for the kernel size
+    parser_options.append(ParserOptions(
+        long="kernel_size",
+        short="k",
+        type=int,
+        default=3,  # Default framerate is set to 3 FPS
+        help="The size of the kernel to use for filtering. Must be an odd number"
+    ))
+
     # TODO work on handling of multiple algorithms at same time in motion estimation and work
     # Add parser option for the nuc adaptation algorithm
     parser_options.append(ParserOptions(
@@ -426,4 +434,3 @@ def dynamic_loading_bar(message="loading", total = 100):
             return result
         return wrapper
     return decorator
-
