@@ -77,6 +77,8 @@ def apply_nuc_algorithms(frames: np.ndarray, algorithms: List[str]=['SBNUCIRFPA'
 
     # Dictionary to store results for each algorithm
     results = {}
+    if isinstance(algorithms, str):
+        algorithms = [algorithms]
 
     for algo in algorithms:
         if algo in nuc_algorithms:

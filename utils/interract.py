@@ -248,7 +248,6 @@ def build_args():
         type=int,
         default=640,  # Default width is set to 640
         help="The width of the video",
-        required=True  # This argument is required
     ))
 
     # Add parser option for the height of the video
@@ -258,7 +257,6 @@ def build_args():
         type=int,
         default=480,  # Default height is set to 480
         help="The height of the video",
-        required=True  # This argument is required
     ))
 
     # Add parser option for the bit depth of the video
@@ -269,7 +267,6 @@ def build_args():
         default="8b",  # Default bit depth is set to 8 bits
         help="The bits' depth of the video",
         choices=['8b', '14b', '16b', '32b', '64b', '128b', '256b'],  # Allowed choices for bit depth
-        required=True  # This argument is required
     ))
 
     # Add parser option for showing the video or not
@@ -317,8 +314,7 @@ def build_args():
         nargs='+', 
         choices=['SBNUCIRFPA', 'AdaSBNUCIRFPA', 'AdaSBNUCIRFPA_reg',
                  'CstStatSBNUC', 'SBNUCLMS', 'SBNUCif_reg', 'AdaSBNUCif_reg'], 
-        help="Algorithms to use for nuc adaptation (can specify multiple)", 
-        required=True
+        help="Algorithms to use for nuc adaptation (can specify multiple)" 
     ))
 
     # Add parser option for the motion estimation algorithm
@@ -329,8 +325,7 @@ def build_args():
         default='FourierShift', 
         nargs='+',
         choices=['OptFlow', 'BlockMotion', 'FourierShift'], 
-        help="Algorithms to use for motion estimation (can specify multiple)", 
-        required=True
+        help="Algorithms to use for motion estimation (can specify multiple)"
     ))
 
     parser_options.append(ParserOptions(
@@ -340,8 +335,7 @@ def build_args():
         default=['mse', 'psnr'],  # Default metrics to compute
         nargs='+', 
         choices=['mse', 'psnr', 'roughness', 'ssim', 'cei', 'entropy', 'edge_preservation', 'nmse'], 
-        help="Metrics to compute (can specify multiple)", 
-        required=True
+        help="Metrics to compute (can specify multiple)" 
     ))
 
     # Parse the input arguments using the defined parser options
