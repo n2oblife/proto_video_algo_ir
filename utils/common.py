@@ -45,7 +45,7 @@ def build_kernel(image: list|np.ndarray, i: int, j: int, k_size=3) -> list|np.nd
             else :
                 kernel_im[p].append(None)
         p+=1
-    return process_return(returned=kernel_im, og=image)
+    return process_return(returned=rm_None(kernel_im), og=image)
 
 
 def rm_None(data):

@@ -313,7 +313,11 @@ def build_args():
         default='SBNUCIRFPA',
         nargs='+', 
         choices=['SBNUCIRFPA', 'AdaSBNUCIRFPA', 'AdaSBNUCIRFPA_reg',
-                 'CstStatSBNUC', 'SBNUCLMS', 'SBNUCif_reg', 'AdaSBNUCif_reg'], 
+                 'CstStatSBNUC', 'SBNUCLMS', 'SBNUCif_reg', 'AdaSBNUCif_reg',
+                 'CompTempNUC', 'NUCFnlFilter', 
+                 'RobustNUCIRFPA', 'AdaRobustNUCIRFPA', 
+                 'SBNUC_smartCam_pipeA', 'SBNUC_smartCam_pipeB', 'SBNUC_smartCam_pipeC',
+                 'SBNUCcomplement'], 
         help="Algorithms to use for nuc adaptation (can specify multiple)" 
     ))
 
@@ -336,6 +340,13 @@ def build_args():
         nargs='+', 
         choices=['mse', 'psnr', 'roughness', 'ssim', 'cei', 'entropy', 'edge_preservation', 'nmse'], 
         help="Metrics to compute (can specify multiple)" 
+    ))
+    
+    parser_options.append(ParserOptions(
+        long="clean", 
+        short="c",
+        action='store_true', # This makes it a boolean flag
+        help="Flag to say if frames are clean or not" 
     ))
 
     # Parse the input arguments using the defined parser options

@@ -81,9 +81,9 @@ def store_video_from_bin(folder_path, width, height, channels=3, depth = "8b")->
     for bin_file in bin_files:
         file_path = os.path.join(folder_path, bin_file)
         frame = read_bin_file(file_path, width, height, channels, depth)
-        frames.append(frame)
-    
-    return frames
+        frames.append(np.squeeze(frame))
+        
+    return np.array(frames, dtype=frames[0].dtype)
 
 
 def store_video(file_path: str = None) -> list:
@@ -256,8 +256,8 @@ def show_video(frames:list|np.ndarray|cv2.Mat, title='frames', frame_rate=30, eq
     cv2.destroyAllWindows()
 
 def showing_all_estimated(estimated_frames, framerate):
-    for algo, frames in estimated_frames:
-        show_video(frames=frames, 
+    for algo in estimated_frames:
+        show_video(frames=estimated_frames[algo], 
                    title=algo,
                    frame_rate=framerate)
 
@@ -298,7 +298,7 @@ def load_frames(args: dict) -> list:
 
     # If the 'show_video' flag is True, display the video
     if args['show_video']:
-        show_video(frames, equalize=True, frame_rate=60)
+        show_video(frames, equalize=True, frame_rate=args['framerate'])
 
     # Return the list of frames
     return frames

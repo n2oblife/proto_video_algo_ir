@@ -5,6 +5,7 @@ from utils.target import *
 from algorithms.AdaSBNUCIRFPA import *
 from algorithms.SBNUCrgGLMS import *
 from algorithms.SBNUCif_reg import *
+from noise_gen import apply_noise
 
 def init():
     return
@@ -93,7 +94,7 @@ def apply_nuc_algorithms(frames: np.ndarray, algorithms: List[str]=['SBNUCIRFPA'
 
 
 
-# python main.py -p C:/Users/zKanit/Pictures/sbnuc_offset -w 640 -he 480 -d 14b -fps 1 -n 60 --show_video
+# python main.py -p C:/Users/zKanit/Pictures/sbnuc_offset -w 640 -he 480 -d 14b -fps 60 -n 60 --show_video --clean
     
 if __name__ == "__main__":
     # Set up logging with INFO level to capture detailed runtime information
@@ -102,23 +103,39 @@ if __name__ == "__main__":
     # Parse command-line arguments to get user inputs
     args = build_args()
 
-    # Load video frames based on provided arguments
-    frames = load_frames(args)
+    # Load video frames based on provided arguments, must be clean frames
+    if args['clean']:
+        clean_frames = np.array(load_frames(args))
+        n_to_compute = min(len(clean_frames), args['num_frames'])
+        clean_frames = clean_frames[:n_to_compute]
+        noisy_frames, noise = apply_noise(clean_frames[:n_to_compute], widht=args['width'], height=args['height'])
+    else:
+        noisy_frames = np.array(load_frames(args))
+        n_to_compute = min(len(noisy_frames), args['num_frames'])
+        noisy_frames = noisy_frames[:n_to_compute]
+        clean_frames = np.array([frame_gauss_3x3_filtering(frame) for frame in tqdm(noisy_frames[:n_to_compute], desc="Estimating clean frame", unit="frame")], dtype=noisy_frames.dtype)
+    
+    # # If the user requested to show the video, display the noisy frames
+    # if args['show_video']:
+    #     print(" --- Showing noisy frames --- ")
+    #     show_video(frames=noisy_frames, title='noisy frames', frame_rate=args['framerate'])
 
     # Apply non-uniformity correction (NUC) algorithms to the frames
-    estimated_frames = apply_nuc_algorithms(frames=frames,
+    estimated_frames = apply_nuc_algorithms(frames=noisy_frames[:n_to_compute],
                                             algorithms=args['nuc_algorithm'])
-
-    # Apply mean filtering to the target frame for noise reduction
-    frame_target = frame_mean_filtering(frames[args['num_frames'] - 1])
     
     # If the user requested to show the video, display the estimated frames
     if args['show_video']:
         print(" --- Showing frames estimation --- ")
-        showing_all_estimated(estimated_frames=estimated_frames, framerate=args['framerate'])
+        if n_to_compute == len(noisy_frames):
+            showing_all_estimated(estimated_frames=estimated_frames, framerate=args['framerate'])
+        else:
+            showing_all_estimated(estimated_frames=estimated_frames, framerate=args['framerate']/4)
     
     # Compute specified metrics for the estimated frames compared to the original frames
-    metrics = metrics_estimated(estimated_frames, frames, args['metrics'])
+    metrics = metrics_estimated(estimated_frames, clean_frames, args['metrics'])
+
+    plot_metrics(metrics)
 
     # Indicate the completion of the process
     print("DONE!")

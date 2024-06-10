@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from skimage.feature import canny
 from skimage.measure import shannon_entropy
 from skimage.metrics import normalized_root_mse as nrmse
@@ -315,5 +316,33 @@ def metrics_estimated(
         # Compute metrics for the current algorithm's enhanced frames
         all_metrics[algo] = apply_metrics(og_frames, enhanced_frames, to_compute, max_px)
 
-    print(f"Metrics : {all_metrics}")
+    # print(f"Metrics : {all_metrics}")
     return all_metrics
+
+def plot_metrics(data):
+    # Extract all metrics from the first algorithm entry
+    metrics = list(data[next(iter(data))].keys())
+
+    # Number of algorithms and metrics
+    num_algorithms = len(data)
+    num_metrics = len(metrics)
+
+    # Create a subplot for each metric
+    fig, axs = plt.subplots(num_metrics, 1, figsize=(10, 5 * num_metrics))
+
+    if num_metrics == 1:
+        axs = [axs]
+
+    for i, metric in enumerate(metrics):
+        for algo, algo_data in data.items():
+            if metric in algo_data:
+                axs[i].plot(algo_data[metric], label=f"{algo}")
+        
+        axs[i].set_title(f"{metric.upper()} for Different Algorithms")
+        axs[i].set_xlabel("Index")
+        axs[i].set_ylabel(metric.upper())
+        axs[i].legend()
+        axs[i].grid(True)
+
+    plt.tight_layout()
+    plt.show()

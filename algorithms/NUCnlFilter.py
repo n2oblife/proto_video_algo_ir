@@ -73,4 +73,5 @@ def M_n(frame, frame_n_1, Ts=15, Tg=11)->bool:
     Mo = np.sum(Bs) # global motion parameter
     return Mo >= Tg
 
+# TODO finish
 def NUCFnlFilter_lr()

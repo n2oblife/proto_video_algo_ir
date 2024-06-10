@@ -1,4 +1,4 @@
-from utils.common import build_kernel, rm_None
+from utils.common import build_kernel
 import cv2
 import numpy as np
 from statistics import mean 
@@ -24,11 +24,9 @@ def kernel_mean_filtering(
     """
     if len(image) > k_size:
         kernel_im = build_kernel(image, i, j, k_size)
-        kernel_im_ = rm_None(kernel_im)
-        return np.mean(kernel_im_)
+        return np.mean(kernel_im)
     else:
-        image_ = rm_None(image)
-        return np.mean(image_)
+        return np.mean(image)
     
 def frame_mean_filtering(
         image: list | np.ndarray,
@@ -127,21 +125,19 @@ def kernel_gauss_3x3_filtering(image: list | np.ndarray, i: int = 0, j: int = 0)
     # If the image is larger than 3x3, build the kernel around the pixel
     if len(image) > 3:
         kernel_im = build_kernel(image, i, j, 3)
-        kernel_im_ = rm_None(kernel_im)
         # Check if the built kernel is not 3x3, return the center value
-        if len(kernel_im_) != 3 or len(kernel_im_[0]) != 3 or len(kernel_im_[-1]) != 3:
-            return kernel_im_[len(kernel_im_) // 2][len(kernel_im_[0]) // 2]
+        if len(kernel_im) != 3 or len(kernel_im[0]) != 3 or len(kernel_im[-1]) != 3:
+            return kernel_im[len(kernel_im) // 2][len(kernel_im[0]) // 2]
         else:
             # Apply Gaussian filter to the 3x3 kernel
-            return kernel_gauss_3x3(kernel_im_)
+            return kernel_gauss_3x3(kernel_im)
     else:
-        image_ = rm_None(image)
         # Check if the input is not 3x3, return the center value
-        if len(image_) != 3 or len(image_[0]) != 3 or len(image_[-1]) != 3:
-            return image_[len(image_) // 2][len(image_[0]) // 2]
+        if len(image) != 3 or len(image[0]) != 3 or len(image[-1]) != 3:
+            return image[len(image) // 2][len(image[0]) // 2]
         else:
             # Apply Gaussian filter to the 3x3 kernel
-            return kernel_gauss_3x3(image_)
+            return kernel_gauss_3x3(image)
 
 def frame_gauss_3x3_filtering(image: list | np.ndarray) -> np.ndarray:
     """
@@ -206,21 +202,19 @@ def kernel_sobel_3x3_filtering(image: list | np.ndarray, i: int = 0, j: int = 0)
     # If the image is larger than 3x3, build the kernel around the pixel
     if len(image) > 3:
         kernel_im = build_kernel(image, i, j, 3)
-        kernel_im_ = rm_None(kernel_im)
         # Check if the built kernel is not 3x3, return the center value
-        if len(kernel_im_) != 3 or len(kernel_im_[0]) != 3 or len(kernel_im_[-1]) != 3:
-            return kernel_im_[len(kernel_im_) // 2][len(kernel_im_[0]) // 2]
+        if len(kernel_im) != 3 or len(kernel_im[0]) != 3 or len(kernel_im[-1]) != 3:
+            return kernel_im[len(kernel_im) // 2][len(kernel_im[0]) // 2]
         else:
             # Apply Sobel filter to the 3x3 kernel
-            return kernel_sobel_3x3(kernel_im_)
+            return kernel_sobel_3x3(kernel_im)
     else:
-        image_ = rm_None(image)
         # Check if the input is not 3x3, return the center value
-        if len(image_) != 3 or len(image_[0]) != 3 or len(image_[-1]) != 3:
-            return image_[len(image_) // 2][len(image_[0]) // 2]
+        if len(image) != 3 or len(image[0]) != 3 or len(image[-1]) != 3:
+            return image[len(image) // 2][len(image[0]) // 2]
         else:
             # Apply Sobel filter to the 3x3 kernel
-            return kernel_sobel_3x3(image_)
+            return kernel_sobel_3x3(image)
 
 def frame_sobel_3x3_filtering(image: list | np.ndarray) -> np.ndarray:
     """
@@ -284,21 +278,19 @@ def kernel_laplacian_3x3_filtering(image: list | np.ndarray, i: int = 0, j: int 
     # If the image is larger than 3x3, build the kernel around the pixel
     if len(image) > 3:
         kernel_im = build_kernel(image, i, j, 3)
-        kernel_im_ = rm_None(kernel_im)
         # Check if the built kernel is not 3x3, return the center value
-        if len(kernel_im_) != 3 or len(kernel_im_[0]) != 3 or len(kernel_im_[-1]) != 3:
-            return kernel_im_[len(kernel_im_) // 2][len(kernel_im_[0]) // 2]
+        if len(kernel_im) != 3 or len(kernel_im[0]) != 3 or len(kernel_im[-1]) != 3:
+            return kernel_im[len(kernel_im) // 2][len(kernel_im[0]) // 2]
         else:
             # Apply Gaussian filter to the 3x3 kernel
-            return kernel_laplacian_3x3(kernel_im_)
+            return kernel_laplacian_3x3(kernel_im)
     else:
-        image_ = rm_None(image)
         # Check if the input is not 3x3, return the center value
-        if len(image_) != 3 or len(image_[0]) != 3 or len(image_[-1]) != 3:
-            return image_[len(image_) // 2][len(image_[0]) // 2]
+        if len(image) != 3 or len(image[0]) != 3 or len(image[-1]) != 3:
+            return image[len(image) // 2][len(image[0]) // 2]
         else:
             # Apply Gaussian filter to the 3x3 kernel
-            return kernel_laplacian_3x3(image_)
+            return kernel_laplacian_3x3(image)
 
 def frame_laplacian_3x3_filtering(image: list | np.ndarray) -> np.ndarray:
     """
@@ -362,21 +354,19 @@ def kernel_military_3x3_filtering(image: list | np.ndarray, i: int = 0, j: int =
     # If the image is larger than 3x3, build the kernel around the pixel
     if len(image) > 3:
         kernel_im = build_kernel(image, i, j, 3)
-        kernel_im_ = rm_None(kernel_im)
         # Check if the built kernel is not 3x3, return the center value
-        if len(kernel_im_) != 3 or len(kernel_im_[0]) != 3 or len(kernel_im_[-1]) != 3:
-            return kernel_im_[len(kernel_im_) // 2][len(kernel_im_[0]) // 2]
+        if len(kernel_im) != 3 or len(kernel_im[0]) != 3 or len(kernel_im[-1]) != 3:
+            return kernel_im[len(kernel_im) // 2][len(kernel_im[0]) // 2]
         else:
             # Apply Gaussian filter to the 3x3 kernel
-            return kernel_military_3x3(kernel_im_)
+            return kernel_military_3x3(kernel_im)
     else:
-        image_ = rm_None(image)
         # Check if the input is not 3x3, return the center value
-        if len(image_) != 3 or len(image_[0]) != 3 or len(image_[-1]) != 3:
-            return image_[len(image_) // 2][len(image_[0]) // 2]
+        if len(image) != 3 or len(image[0]) != 3 or len(image[-1]) != 3:
+            return image[len(image) // 2][len(image[0]) // 2]
         else:
             # Apply Gaussian filter to the 3x3 kernel
-            return kernel_military_3x3(image_)
+            return kernel_military_3x3(image)
 
 def frame_military_3x3_filtering(image: list | np.ndarray) -> np.ndarray:
     """
@@ -420,11 +410,9 @@ def kernel_uniform_filtering(
     """
     if len(image) > k_size:
         kernel_im = build_kernel(image, i, j, k_size)
-        kernel_im_ = rm_None(kernel_im)
-        return uniform_filter(kernel_im_, sig)
+        return uniform_filter(kernel_im, sig)
     else:
-        image_ = rm_None(image)
-        return uniform_filter(image_, sig)
+        return uniform_filter(image, sig)
     
 def frame_uniform_filtering(
         image: list | np.ndarray,
@@ -469,11 +457,9 @@ def kernel_median_filtering(
     """
     if len(image) > k_size:
         kernel_im = build_kernel(image, i, j, k_size)
-        kernel_im_ = rm_None(kernel_im)
-        return median_filter(kernel_im_, sig)
+        return median_filter(kernel_im, sig)
     else:
-        image_ = rm_None(image)
-        return median_filter(image_, sig)
+        return median_filter(image, sig)
     
 def frame_median_filtering(
         image: list | np.ndarray,
@@ -521,11 +507,9 @@ def kernel_bilateral_filtering(
     """
     if len(image) > k_size:
         kernel_im = build_kernel(image, i, j, k_size)
-        kernel_im_ = rm_None(kernel_im)
-        return cv2.bilateralFilter(kernel_im_, d, sigmaColor, sigmaSpace)
+        return cv2.bilateralFilter(kernel_im, d, sigmaColor, sigmaSpace)
     else:
-        image_ = rm_None(image)
-        return cv2.bilateralFilter(image_, d, sigmaColor, sigmaSpace)
+        return cv2.bilateralFilter(image, d, sigmaColor, sigmaSpace)
     
 def frame_bilateral_filtering(
         image: list | np.ndarray,
@@ -572,11 +556,9 @@ def kernel_wiener_filtering(
     """
     if len(image) > k_size:
         kernel_im = build_kernel(image, i, j, k_size)
-        kernel_im_ = rm_None(kernel_im)
-        return wiener(kernel_im_)
+        return wiener(kernel_im)
     else:
-        image_ = rm_None(image)
-        return wiener(image_)
+        return wiener(image)
     
 def frame_wiener_filtering(
         image: list | np.ndarray,
@@ -621,11 +603,9 @@ def kernel_bilateral_denoise_filtering(
     """
     if len(image) > k_size:
         kernel_im = build_kernel(image, i, j, k_size)
-        kernel_im_ = rm_None(kernel_im)
-        return denoise_bilateral(kernel_im_, sigma_color=sigma_color, sigma_spatial=sigma_spatial, multichannel=multichannel)
+        return denoise_bilateral(kernel_im, sigma_color=sigma_color, sigma_spatial=sigma_spatial, multichannel=multichannel)
     else:
-        image_ = rm_None(image)
-        return denoise_bilateral(image_, sigma_color=sigma_color, sigma_spatial=sigma_spatial, multichannel=multichannel)
+        return denoise_bilateral(image, sigma_color=sigma_color, sigma_spatial=sigma_spatial, multichannel=multichannel)
 
 def frame_bilateral_denoise_filtering(
         image: list | np.ndarray,
@@ -679,13 +659,11 @@ def kernel_nl_means_filtering(
     """
     if len(image) > k_size:
         kernel_im = build_kernel(image, i, j, k_size)
-        kernel_im_ = rm_None(kernel_im)
-        sigma_est = np.mean(estimate_sigma(kernel_im_, multichannel=multichannel))
-        return denoise_nl_means(kernel_im_, h=h*sigma_est, fast_mode=fast_mode, patch_size=patch_size, patch_distance=patch_distance, multichannel=multichannel)
+        sigma_est = np.mean(estimate_sigma(kernel_im, multichannel=multichannel))
+        return denoise_nl_means(kernel_im, h=h*sigma_est, fast_mode=fast_mode, patch_size=patch_size, patch_distance=patch_distance, multichannel=multichannel)
     else:
-        image_ = rm_None(image)
-        sigma_est = np.mean(estimate_sigma(image_, multichannel=multichannel))
-        return denoise_nl_means(image_, h=h*sigma_est, fast_mode=fast_mode, patch_size=patch_size, patch_distance=patch_distance, multichannel=multichannel)
+        sigma_est = np.mean(estimate_sigma(image, multichannel=multichannel))
+        return denoise_nl_means(image, h=h*sigma_est, fast_mode=fast_mode, patch_size=patch_size, patch_distance=patch_distance, multichannel=multichannel)
 
 def frame_nl_means_filtering(
         image: list | np.ndarray,
@@ -737,11 +715,9 @@ def kernel_var_filtering(
     """
     if len(image) > k_size:
         kernel_im = build_kernel(image, i, j, k_size)
-        kernel_im_ = rm_None(kernel_im)
-        return np.var(kernel_im_)
+        return np.var(kernel_im)
     else:
-        image_ = rm_None(image)
-        return np.var(image_)
+        return np.var(image)
     
 def frame_var_filtering(
         image: list | np.ndarray,
@@ -824,11 +800,9 @@ def kernel_mad_filtering(
     """
     if len(image) > k_size:
         kernel_im = build_kernel(image, i, j, k_size)
-        kernel_im_ = rm_None(kernel_im)
-        return np.mean(np.abs(kernel_im_ - np.mean(kernel_im_)))
+        return np.mean(np.abs(kernel_im - np.mean(kernel_im)))
     else:
-        image_ = rm_None(image)
-        return np.mean(np.abs(image_ - np.mean(image_)))
+        return np.mean(np.abs(image - np.mean(image)))
 
 def frame_mad_filtering(
         image: list | np.ndarray,
