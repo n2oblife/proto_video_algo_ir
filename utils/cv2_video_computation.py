@@ -248,9 +248,9 @@ def show_video(frames:list|np.ndarray|cv2.Mat, title='frames', frame_rate=30, eq
         # Press 'q' on keyboard to exit
         if cv2.waitKey(int(1000 / frame_rate)) & 0xFF == ord('q'):
             break
-        # Press 'b' on keyboard to exit
-        if cv2.waitKey(int(1000 / frame_rate)) & 0xFF == ord('a'):
-            print(f"\nCurrent frame is {i}th")
+        # Press 'a' on keyboard to print current frame number
+        # if cv2.waitKey(int(1000 / frame_rate)) & 0xFF == ord('a'):
+        #     print(f"\nCurrent frame is {i}th")
 
     # Close all the frames
     cv2.destroyAllWindows()

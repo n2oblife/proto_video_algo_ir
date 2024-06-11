@@ -269,12 +269,20 @@ def build_args():
         choices=['8b', '14b', '16b', '32b', '64b', '128b', '256b'],  # Allowed choices for bit depth
     ))
 
+    # TODO fix pb of helper otput when declaring two flags
     # Add parser option for showing the video or not
     parser_options.append(ParserOptions(
         long="show_video",
         short="s",
         action='store_true',  # This makes it a boolean flag
-        help="Show the video if this flag is set"
+        help="Show the video if this flag is set",
+    ))
+    
+    parser_options.append(ParserOptions(
+        long="clean", 
+        short="c",
+        action='store_true', # This makes it a boolean flag
+        help="Flag to say if frames are clean or not", 
     ))
 
     # Add parser option for the number of frames to compute
@@ -293,6 +301,15 @@ def build_args():
         type=float,
         default=60,  # Default framerate is set to 60 FPS
         help="The framerate per second for displaying the video"
+    ))
+
+    # Add parser option for the begining of a stable frame
+    parser_options.append(ParserOptions(
+        long="stable_frame",
+        short="st",
+        type=int,
+        default=2990,  # Default framerate is set to 60 FPS
+        help="The begining of a stable scene"
     ))
 
     # Add parser option for the kernel size
@@ -314,7 +331,7 @@ def build_args():
         nargs='+', 
         choices=['SBNUCIRFPA', 'AdaSBNUCIRFPA', 'AdaSBNUCIRFPA_reg',
                  'CstStatSBNUC', 'SBNUCLMS', 'SBNUCif_reg', 'AdaSBNUCif_reg',
-                 'CompTempNUC', 'NUCFnlFilter', 
+                 'CompTempNUC', 'NUCnlFilter', 
                  'RobustNUCIRFPA', 'AdaRobustNUCIRFPA', 
                  'SBNUC_smartCam_pipeA', 'SBNUC_smartCam_pipeB', 'SBNUC_smartCam_pipeC',
                  'SBNUCcomplement'], 
@@ -340,13 +357,6 @@ def build_args():
         nargs='+', 
         choices=['mse', 'psnr', 'roughness', 'ssim', 'cei', 'entropy', 'edge_preservation', 'nmse'], 
         help="Metrics to compute (can specify multiple)" 
-    ))
-    
-    parser_options.append(ParserOptions(
-        long="clean", 
-        short="c",
-        action='store_true', # This makes it a boolean flag
-        help="Flag to say if frames are clean or not" 
     ))
 
     # Parse the input arguments using the defined parser options

@@ -182,7 +182,8 @@ def kernel_sobel_3x3(kernel_3x3: list | np.ndarray, ) -> float:
             return np.sqrt((sum([sobel_ker_x[i][j] * kernel_3x3[i][j] for i in range(3) for j in range(3)])**2) + (sobel_ker_y([sobel_ker[i][j] * kernel_3x3[i][j] for i in range(3) for j in range(3)])**2))
         # If input is a numpy array, apply Sobel filter directly
         if isinstance(kernel_3x3, np.ndarray):
-            sobel_ker = np.array(sobel_ker, dtype=kernel_3x3.dtype)
+            sobel_ker_x = np.array(sobel_ker_x, dtype=kernel_3x3.dtype)
+            sobel_ker_y = np.array(sobel_ker_y, dtype=kernel_3x3.dtype)
             return np.sqrt(((sobel_ker_x * kernel_3x3)**2 + (sobel_ker_y * kernel_3x3)**2).sum())
     else:
         raise TypeError("Kernel to compute must be of size 3x3")
@@ -845,7 +846,7 @@ def exp_window(
     Returns:
         float | np.ndarray: The updated smoothed value.
     """
-    if 0 < alpha < 1:
+    if 0 <= alpha <= 1:
         # less computation : smoothed + alpha*(new_val - smoothed)
         return alpha*new_val + (1-alpha)*smoothed
     else:

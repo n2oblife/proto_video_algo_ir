@@ -5,6 +5,11 @@ from utils.target import *
 from algorithms.AdaSBNUCIRFPA import *
 from algorithms.SBNUCrgGLMS import *
 from algorithms.SBNUCif_reg import *
+from algorithms.NUCnlFilter import *
+from algorithms.SBNUC_smartCam import *
+from algorithms.RobustNUCIRFPA import *
+from algorithms.SBNUCcomplement import *
+# from algorithms.CompTempNUC import *
 from noise_gen import apply_noise
 
 def init():
@@ -42,6 +47,14 @@ def build_nuc_algos():
               -> 'SBNUCLMS': Function for SBNUCLMS algorithm
               -> 'SBNUCif_reg': Function for SBNUC with interframe registration
               -> 'AdaSBNUCif_reg': Function for adaptive SBNUC with interframe registration
+              -> 'CompTempNUC' : Function to compensate Temperature variations through NUC
+              -> 'NUCnlFilter' : Function to apply a non linear filter to the NUC
+              -> 'RobustNUCIRFPA' : Function to apply a robust NUC on IRFPA
+              -> 'AdaRobustNUCIRFPA' : Function to apply a robust NUC on IRFPA with adaptation
+              -> 'SBNUC_smartCam_pipeA' : Function to apply a NUC smart camera algorithm using pipeline A
+              -> 'SBNUC_smartCam_pipeB' : Function to apply a NUC smart camera algorithm using pipeline B
+              -> 'SBNUC_smartCam_pipeC' : Function to apply a NUC smart camera algorithm using pipeline C
+              -> 'SBNUCcomplement' : Function to apply a complement to the first filter
     """
     # TODO add new algos when implementation
     return {
@@ -52,6 +65,14 @@ def build_nuc_algos():
         'SBNUCLMS': SBNUCLMS,                    # Function for SBNUCLMS algorithm
         'SBNUCif_reg': SBNUCif_reg,              # Function for SBNUC with interframe registration
         'AdaSBNUCif_reg': AdaSBNUCif_reg,        # Function for adaptive SBNUC with interframe registration
+        # 'CompTempNUC': CompTempNUC,              # Function to compensate Temperature variations through NUC
+        'NUCnlFilter': NUCnlFilter,            # Function to apply a non linear filter to the NUC
+        'RobustNUCIRFPA': RobustNUCIRFPA,        # Function to apply a robust NUC on IRFPA
+        'AdaRobustNUCIRFPA': AdaRobustNUCIRFPA,  # Function to apply a robust NUC on IRFPA with adaptation
+        'SBNUC_smartCam_pipeA': SBNUC_smartCam_pipeA,  # Function to apply a NUC smart camera algorithm using pipeline A
+        'SBNUC_smartCam_pipeB': SBNUC_smartCam_pipeB,  # Function to apply a NUC smart camera algorithm using pipeline B
+        'SBNUC_smartCam_pipeC': SBNUC_smartCam_pipeC,  # Function to apply a NUC smart camera algorithm using pipeline C
+        'SBNUCcomplement': SBNUCcomplement       # Function to apply a complement to the first filter
     }
 
 
@@ -102,20 +123,21 @@ if __name__ == "__main__":
 
     # Parse command-line arguments to get user inputs
     args = build_args()
+    stable_frame_number = args['stable_frame']
 
     # Load video frames based on provided arguments, must be clean frames
     if args['clean']:
         clean_frames = np.array(load_frames(args))
         n_to_compute = min(len(clean_frames), args['num_frames'])
-        clean_frames = clean_frames[:n_to_compute]
-        noisy_frames, noise = apply_noise(clean_frames[:n_to_compute], widht=args['width'], height=args['height'])
+        clean_frames = clean_frames[stable_frame_number:stable_frame_number+n_to_compute]
+        noisy_frames, noise = apply_noise(clean_frames, widht=args['width'], height=args['height'])
     else:
         noisy_frames = np.array(load_frames(args))
         n_to_compute = min(len(noisy_frames), args['num_frames'])
-        noisy_frames = noisy_frames[:n_to_compute]
-        clean_frames = np.array([frame_gauss_3x3_filtering(frame) for frame in tqdm(noisy_frames[:n_to_compute], desc="Estimating clean frame", unit="frame")], dtype=noisy_frames.dtype)
+        noisy_frames = noisy_frames[stable_frame_number:stable_frame_number+n_to_compute]
+        # clean_frames = np.array([frame_gauss_3x3_filtering(frame) for frame in tqdm(noisy_frames, desc="Estimating clean frame", unit="frame")], dtype=noisy_frames.dtype)
     
-    # # If the user requested to show the video, display the noisy frames
+    # If the user requested to show the video, display the noisy frames
     # if args['show_video']:
     #     print(" --- Showing noisy frames --- ")
     #     show_video(frames=noisy_frames, title='noisy frames', frame_rate=args['framerate'])

@@ -27,7 +27,7 @@ def SBNUCif_reg(frames, algo='FourierShift', lr=0.05, offset_only=True):
 
     # Iterate through the frames starting from the second frame
     for frame in tqdm(frames[1:], desc="CstStatSBNUC processing", unit="frame"):
-        frame_est = SBNUCif_reg_frame(frame, frame_n_1, coeffs, lr, algo, offset_only)
+        frame_est, coeffs = SBNUCif_reg_frame(frame, frame_n_1, coeffs, lr, algo, offset_only)
         all_frames_est.append(frame_est)
         frame_n_1 = frame  # Update the previous frame for motion detection
     
@@ -55,18 +55,22 @@ def SBNUCif_reg_frame(frame, frame_n_1, coeffs, lr=0.05, algo='FourierShift', of
     all_Xest = []  # List to store estimated pixel values for the frame
     
     # i, j position of current frame is equal to i-di, j-dj position of previous frame
-    for i in range(di, len(frame) - di):
+    k=0
+    for i in range(len(frame)):
         all_Xest.append([])  # Initialize row for estimated values
-        for j in range(dj, len(frame[0]) - dj):
-            Eij = frame_n_1[i-di][j-dj] - frame[i][j]
-            coeffs['o'][i][j] = coeffs['o'][i][j] + lr * Eij
+        for j in range(len(frame[0])):
+            idi = i-di
+            jdj = j-dj
+            if (0<=idi<len(frame)) and (0<=jdj<len(frame[0])):
+                Eij = frame_n_1[idi][jdj] - frame[i][j]
+                coeffs['o'][i][j] = coeffs['o'][i][j] + lr * Eij
 
-            if not offset_only:
-                coeffs['g'][i][j] = coeffs['g'][i][j] + lr * Eij * frame[i][j]
+                if not offset_only:
+                    coeffs['g'][i][j] = coeffs['g'][i][j] + lr * Eij * frame[i][j]
 
             # Estimate corrected pixel value
-            all_Xest[i].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
-
+            all_Xest[k].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
+        k+=1
     return np.array(all_Xest, dtype=frame.dtype), coeffs
 
 def AdaSBNUCif_reg(frames, algo='FourierShift', lr=0.05, offset_only=True):
@@ -88,11 +92,12 @@ def AdaSBNUCif_reg(frames, algo='FourierShift', lr=0.05, offset_only=True):
 
     # Iterate through the frames starting from the second frame
     for frame in tqdm(frames[1:], desc="CstStatSBNUC processing", unit="frame"):
-        frame_est = AdaSBNUCif_reg_frame(frame, frame_n_1, coeffs, lr, algo, offset_only)
+        frame_est, coeffs = AdaSBNUCif_reg_frame(frame, frame_n_1, coeffs, lr, algo, offset_only)
         all_frames_est.append(frame_est)
         frame_n_1 = frame  # Update the previous frame for motion detection
     
     print(f"{len(all_frames_est)} frames estimated using SBNUC algorithm")
+    # breakpoint()
     return np.array(all_frames_est, dtype=frames[0].dtype)
 
 def AdaSBNUCif_reg_frame(frame, frame_n_1, coeffs, lr=0.05, algo='FourierShift', offset_only=True):
@@ -118,17 +123,21 @@ def AdaSBNUCif_reg_frame(frame, frame_n_1, coeffs, lr=0.05, algo='FourierShift',
     update_nuc = (2 <= np.sqrt(di**2 + dj**2) <= 16)  # Update threshold from the paper
     
     # i, j position of current frame is equal to i-di, j-dj position of previous frame
-    for i in range(di, len(frame) - di):
+    k=0
+    for i in range(len(frame)):
         all_Xest.append([])  # Initialize row for estimated values
-        for j in range(dj, len(frame[0]) - dj):
-            if update_nuc:
-                Eij = frame_n_1[i-di][j-dj] - frame[i][j]
+        for j in range(len(frame[0])):
+            idi = i-di
+            jdj = j-dj
+            if update_nuc and (0<=idi<len(frame)) and (0<=jdj<len(frame[0])):
+                Eij = frame_n_1[idi][jdj] - frame[i][j]
                 coeffs['o'][i][j] = coeffs['o'][i][j] + lr * Eij
 
                 if not offset_only:
                     coeffs['g'][i][j] = coeffs['g'][i][j] + lr * Eij * frame[i][j]
 
             # Estimate corrected pixel value
-            all_Xest[i].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
+            all_Xest[k].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
+        k+=1
 
     return np.array(all_Xest, dtype=frame.dtype), coeffs

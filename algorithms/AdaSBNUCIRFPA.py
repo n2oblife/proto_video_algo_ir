@@ -208,10 +208,10 @@ def AdaSBNUCIRFPA_reg(frames: list | np.ndarray, K: float | np.ndarray = 1., alp
     all_frame_est = []  # List to store estimated (corrected) frames
     coeffs = init_nuc(frames[0])  # Initialize coefficients based on the first frame
     coeffs_n_1 = init_nuc(frames[0])  # Initialize previous frame coefficients
-    for frame in frames:
+    for frame in tqdm(frames, desc="AdaSBNUCIRFPA_reg processing", unit="frame"):
         frame_est, coeffs, coeffs_n_1 = AdaSBNUCIRFPA_reg_frame(frame, coeffs, coeffs_n_1, K, alpha, k_size)
         all_frame_est.append(frame_est)
-    return np.array(all_frame_est, dtype=frames[0])
+    return np.array(all_frame_est, dtype=frames.dtype)
 
 def AdaSBNUCIRFPA_reg_frame(
         frame: list | np.ndarray, 

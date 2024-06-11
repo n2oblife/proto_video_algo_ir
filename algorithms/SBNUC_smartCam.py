@@ -23,7 +23,7 @@ def SBNUC_smartCam_pipeA(frames:list|np.ndarray, alpha=2**(-8)):
         np.ndarray: Estimated frames after applying pipeline A.
     """
     all_frames_est = []
-    m_k = np.zeros(frames[0], dtype=frames.dtype)
+    m_k = np.zeros(frames[0].shape, dtype=frames.dtype)
     for frame in tqdm(frames, desc="SBNUC_smartCam algorithm pipeline A", unit="frame"):
         frame_est, m_k = SBNUC_smartCam_pipeA_frame(frame, m_k, alpha)
         all_frames_est.append(frame_est)
@@ -42,6 +42,7 @@ def SBNUC_smartCam_pipeA_frame(frame:list|np.ndarray, m_k, alpha=2**(-8)):
         tuple: (Estimated frame, updated correction map)
     """
     high_passed = frame_military_3x3_filtering(frame)
+    # high_passed = frame_sobel_3x3_filtering(frame)
     m_k = frame_exp_window_filtering(high_passed, m_k, alpha)
     return frame - m_k, m_k
 
@@ -58,7 +59,7 @@ def SBNUC_smartCam_pipeB(frames:list|np.ndarray, alpha=2**(-8), alpha_p=2**(-12)
         np.ndarray: Estimated frames after applying pipeline B.
     """
     all_frames_est = []
-    m_k = np.zeros(frames[0], dtype=frames.dtype)
+    m_k = np.zeros(frames[0].shape, dtype=frames.dtype)
     m_k_p = np.zeros(len(frames[0]), dtype=frames.dtype)
     for frame in tqdm(frames, desc="SBNUC_smartCam algorithm pipeline B", unit="frame"):
         frame_est, m_k, m_k_p = SBNUC_smartCam_pipeB_frame(frame, m_k, m_k_p, alpha, alpha_p)
@@ -85,6 +86,7 @@ def SBNUC_smartCam_pipeB_frame(
         tuple: (Estimated frame, updated pixel-level correction map, updated column-level correction map)
     """
     high_passed = frame_military_3x3_filtering(frame)
+    # high_passed = frame_sobel_3x3_filtering(frame)
     m_k_p = SBNUC_smartCam_col_corr(frame, m_k_p, alpha_p)
     m_k = frame_exp_window_filtering(high_passed, m_k, alpha)
     return SBNUC_smartCam_apply_col_corr(frame, m_k_p) - m_k, m_k, m_k_p
@@ -103,10 +105,11 @@ def SBNUC_smartCam_pipeC(frames:list|np.ndarray, alpha=2**(-8), alpha_p=2**(-12)
         np.ndarray: Estimated frames after applying pipeline C.
     """
     all_frames_est = []
-    frame_avg = np.zeros(frames[0], dtype=frames.dtype)
-    m_k = np.zeros(frames[0], dtype=frames.dtype)
-    m_k_p = np.zeros(len(frames[0]), dtype=frames.dtype)
+    frame_avg = np.zeros(frames[0].shape, dtype=frames.dtype)
+    m_k = np.zeros(frames[0].shape, dtype=frames.dtype)
+    # m_k_p = np.zeros(len(frames[0]), dtype=frames.dtype)
     for frame in tqdm(frames, desc="SBNUC_smartCam algorithm pipeline C", unit="frame"):
+        m_k_p = np.zeros(len(frames[0]), dtype=frames.dtype)
         frame_est, m_k, m_k_p = SBNUC_smartCam_pipeC_frame(frame, frame_avg, m_k, m_k_p, alpha, alpha_p, alpha_avg)
         all_frames_est.append(frame_est)
     return np.array(all_frames_est, dtype=frames[0].dtype)
@@ -152,9 +155,9 @@ def SBNUC_smartCam_col_corr(frame:list|np.ndarray, m_k_p:list|np.ndarray, alpha_
     Returns:
         np.ndarray: Updated column-level correction map.
     """
-    for i in range(len(frame)):
-        for j in range(len(frame[0])):
-            m_k_p[j] = exp_window(frame[i][j], m_k_p[j], alpha_p)
+    for j in range(len(frame[0])):
+        for i in range(len(frame)):
+            m_k_p[i] = exp_window(frame[i][j], m_k_p[i], alpha_p)
     return m_k_p
 
 def SBNUC_smartCam_apply_col_corr(frame:list|np.ndarray, m_k_p:list|np.ndarray):
@@ -169,7 +172,7 @@ def SBNUC_smartCam_apply_col_corr(frame:list|np.ndarray, m_k_p:list|np.ndarray):
         np.ndarray: Corrected frame.
     """
     correctec_im = np.array(frame, dtype=frame.dtype)
-    for i in range(len(frame)):
-        for j in range(len(frame[0])):
-            correctec_im[i][j] = frame[i][j] - m_k_p[j]
+    for j in range(len(frame[0])):
+        for i in range(len(frame)):
+            correctec_im[i][j] = frame[i][j] - m_k_p[i]
     return correctec_im

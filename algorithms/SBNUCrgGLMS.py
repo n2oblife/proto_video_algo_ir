@@ -28,7 +28,7 @@ def init_S_M(
     }
 
 
-def CstStatSBNUC(frames: list | np.ndarray, threshold=0., k_size=3, offset_only=True) -> np.ndarray:
+def CstStatSBNUC(frames: list | np.ndarray, threshold=0., alpha=0.5, offset_only=True) -> np.ndarray:
     """
     Apply the scene-based non-uniformity correction (SBNUC) method to a sequence of frames.
 
@@ -56,9 +56,9 @@ def CstStatSBNUC(frames: list | np.ndarray, threshold=0., k_size=3, offset_only=
     for frame in tqdm(frames[1:], desc="CstStatSBNUC processing", unit="frame"):
         # Estimate the current frame using the previous frame
         frame_est, corr_coeffs, sbnuc_coeffs = CstStatSBNUC_frame(
-            frame, frame_n_1, 
-            corr_coeffs, sbnuc_coeffs, 
-            threshold, k_size, offset_only
+            frame=frame, frame_n_1=frame_n_1, 
+            corr_coeffs=corr_coeffs, sbnuc_coeffs=sbnuc_coeffs, 
+            threshold=threshold, alpha=alpha, offset_only=offset_only
         )
         all_frames_est.append(frame_est)
         

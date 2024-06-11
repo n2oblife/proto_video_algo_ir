@@ -19,7 +19,7 @@ def RobustNUCIRFPA(frames: list | np.ndarray, offset_only=True):
         np.ndarray: Estimated frames after applying RobustNUCIRFPA.
     """
     all_frames_est = []
-    coeffs = init_nuc()  # Initialize NUC coefficients
+    coeffs = init_nuc(frames[0])  # Initialize NUC coefficients
     for frame in tqdm(frames, desc="RobustNUCIRFPA algorithm", unit="frame"):
         # Estimate the current frame using the previous frame
         if offset_only:
@@ -116,7 +116,7 @@ def AdaRobustNUCIRFPA(frames: list | np.ndarray, offset_only=True, alpha_m=0.05)
         np.ndarray: Estimated frames after applying Adaptive RobustNUCIRFPA.
     """
     all_frames_est = []
-    coeffs = init_nuc()  # Initialize NUC coefficients
+    coeffs = init_nuc(frames[0])  # Initialize NUC coefficients
     for frame in tqdm(frames, desc="Adaptive RobustNUCIRFPA algorithm", unit="frame"):
         # Estimate the current frame using the previous frame
         if offset_only:
