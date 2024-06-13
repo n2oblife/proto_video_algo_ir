@@ -7,6 +7,7 @@ from tqdm import tqdm
 from functools import wraps
 from typing import Union, List, Any
 from copy import deepcopy
+import numpy as np
 
 def set_logging_info(mode='default') -> None:
     """
@@ -290,7 +291,7 @@ def build_args():
         long="num_frames",
         short="n",
         type=int,
-        default=None,  # Default is None, which means process all frames
+        default=np.inf,  # Default is None, which means process all frames
         help="The number of frames to compute"
     ))
 
@@ -299,7 +300,7 @@ def build_args():
         long="framerate",
         short="fps",
         type=float,
-        default=60,  # Default framerate is set to 60 FPS
+        default=30,  # Default framerate is set to 60 FPS
         help="The framerate per second for displaying the video"
     ))
 
@@ -308,7 +309,7 @@ def build_args():
         long="stable_frame",
         short="st",
         type=int,
-        default=2990,  # Default framerate is set to 60 FPS
+        default=0,
         help="The begining of a stable scene"
     ))
 
@@ -334,7 +335,8 @@ def build_args():
                  'CompTempNUC', 'NUCnlFilter', 
                  'RobustNUCIRFPA', 'AdaRobustNUCIRFPA', 
                  'SBNUC_smartCam_pipeA', 'SBNUC_smartCam_pipeB', 'SBNUC_smartCam_pipeC',
-                 'SBNUCcomplement'], 
+                 'SBNUCcomplement',
+                 'all'], 
         help="Algorithms to use for nuc adaptation (can specify multiple)" 
     ))
 
@@ -353,9 +355,10 @@ def build_args():
         long="metrics", 
         short="m", 
         type=str, 
-        default=['mse', 'psnr'],  # Default metrics to compute
+        # default=['mse', 'psnr'],  # Default metrics to compute
         nargs='+', 
-        choices=['mse', 'psnr', 'roughness', 'ssim', 'cei', 'entropy', 'edge_preservation', 'nmse'], 
+        choices=['mse', 'psnr', 'roughness', 'ssim', 'cei', 'entropy', 'edge_preservation', 'nmse',
+                 'all'], 
         help="Metrics to compute (can specify multiple)" 
     ))
 

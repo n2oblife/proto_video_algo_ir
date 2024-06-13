@@ -91,7 +91,7 @@ def SBNUC_smartCam_pipeB_frame(
     m_k = frame_exp_window_filtering(high_passed, m_k, alpha)
     return SBNUC_smartCam_apply_col_corr(frame, m_k_p) - m_k, m_k, m_k_p
 
-def SBNUC_smartCam_pipeC(frames:list|np.ndarray, alpha=2**(-8), alpha_p=2**(-12), alpha_avg=0.1):
+def SBNUC_smartCam_pipeC(frames:list|np.ndarray, alpha=2**(-8), alpha_p=2**(-12), alpha_avg=0.01):
     """
     Apply the SBNUC_smartCam algorithm pipeline C to a sequence of frames.
 
@@ -107,9 +107,9 @@ def SBNUC_smartCam_pipeC(frames:list|np.ndarray, alpha=2**(-8), alpha_p=2**(-12)
     all_frames_est = []
     frame_avg = np.zeros(frames[0].shape, dtype=frames.dtype)
     m_k = np.zeros(frames[0].shape, dtype=frames.dtype)
-    # m_k_p = np.zeros(len(frames[0]), dtype=frames.dtype)
+    m_k_p = np.zeros(len(frames[0]), dtype=frames.dtype)
     for frame in tqdm(frames, desc="SBNUC_smartCam algorithm pipeline C", unit="frame"):
-        m_k_p = np.zeros(len(frames[0]), dtype=frames.dtype)
+        # m_k_p = np.zeros(len(frames[0]), dtype=frames.dtype)
         frame_est, m_k, m_k_p = SBNUC_smartCam_pipeC_frame(frame, frame_avg, m_k, m_k_p, alpha, alpha_p, alpha_avg)
         all_frames_est.append(frame_est)
     return np.array(all_frames_est, dtype=frames[0].dtype)
@@ -119,7 +119,7 @@ def SBNUC_smartCam_pipeC_frame(
         frame_avg:list|np.ndarray, 
         m_k:list|np.ndarray, 
         m_k_p:list|np.ndarray, 
-        alpha=2**(-8), alpha_p=2**(-12), alpha_avg=0.1
+        alpha=2**(-8), alpha_p=2**(-12), alpha_avg=0.01
     )->np.ndarray:
     """
     Process a single frame using pipeline C.

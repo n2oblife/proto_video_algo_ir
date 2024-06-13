@@ -28,7 +28,7 @@ def init_S_M(
     }
 
 
-def CstStatSBNUC(frames: list | np.ndarray, threshold=0., alpha=0.5, offset_only=True) -> np.ndarray:
+def CstStatSBNUC(frames: list | np.ndarray, threshold=0., alpha=0.01, offset_only=True) -> np.ndarray:
     """
     Apply the scene-based non-uniformity correction (SBNUC) method to a sequence of frames.
 
@@ -65,7 +65,6 @@ def CstStatSBNUC(frames: list | np.ndarray, threshold=0., alpha=0.5, offset_only
         # Update the previous frame for motion detection
         frame_n_1 = frame
     
-    print(f"{len(all_frames_est)} frames estimated using SBNUC algorithm")
     return np.array(all_frames_est, dtype=frames[0].dtype) 
 
 
@@ -75,7 +74,7 @@ def CstStatSBNUC_frame(
         corr_coeffs: dict[str, float],
         sbnuc_coeffs: dict[str, float],
         threshold=0.,
-        alpha=0.5,
+        alpha=0.01,
         offset_only=True
     ) -> tuple[list | np.ndarray, dict[str, float], dict[str, float]]:
     """
@@ -119,7 +118,7 @@ def CstStatSBNUC_frame(
     return np.array(all_Xest, dtype=frame.dtype), corr_coeffs, sbnuc_coeffs
 
 
-def constant_statistics_sbunc_update_nuc(Yij, Yij_n_1, S_n_1, M_n_1, threshold=0, alpha=0.5):
+def constant_statistics_sbunc_update_nuc(Yij, Yij_n_1, S_n_1, M_n_1, threshold=0, alpha=0.01):
     """
     Update the constant statistics used in Scene-Based Non-Uniformity Correction (SBNUC) algorithm.
 
@@ -177,7 +176,6 @@ def SBNUCLMS(frames: list | np.ndarray, K=0.1, M=0.5, threshold=0, k_size=3, off
         frame_est, corr_coeffs = SBNUCLMS_frame(frame, corr_coeffs, Z, K, M, threshold, k_size, offset_only)
         all_frames_est.append(frame_est)  # Append the estimated frame to the list
 
-    print(f"{len(all_frames_est)} frames estimated using SBNUCrgGLMS algo")
     return np.array(all_frames_est, dtype=frames[0].dtype)  # Convert the list of frames to a numpy array and return it
 
 def SBNUCLMS_frame(frame: list | np.ndarray, corr_coeffs: dict, Z, K=0.1, M=0.5, threshold=0, k_size=3, offset_only=True) -> tuple[list | np.ndarray, dict]:

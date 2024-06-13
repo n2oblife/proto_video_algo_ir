@@ -258,20 +258,23 @@ def apply_metrics(
     Returns:
         dict[str, list]: A dictionary containing lists of metric values for each frame.
     """
-    # Initialize metrics dictionary
-    metrics = {metric: [] for metric in to_compute}
-
     # Define available metrics functions
     metric_functions = {
         "mse": calculate_mse,
         "psnr": lambda original, enhanced: calculate_psnr(original, enhanced, max_px),
-        "roughness": calculate_roughness,
         "ssim": calculate_ssim,
         "cei": calculate_cei,
         "entropy": calculate_entropy,
         "edge_preservation": calculate_edge_preservation,
-        "nmse": calculate_nrmse
+        "nmse": calculate_nrmse,
+        "roughness": calculate_roughness
     }
+
+    if to_compute==['all']:
+        to_compute = metric_functions.keys()
+
+    # Initialize metrics dictionary
+    metrics = {metric: [] for metric in to_compute}
 
     # Iterate through frames and compute the specified metrics
     for i in tqdm(range(len(enhanced_frames)), desc="Computing metrics", unit="frame"):
@@ -282,11 +285,17 @@ def apply_metrics(
         # Compute each specified metric and store the results
         for metric in to_compute:
             if metric in metric_functions:
-                metrics[metric].append(metric_functions[metric](temp_original, temp_enhanced))
+                    try:
+                        # Try to call the function with both arguments
+                        metrics[metric].append(metric_functions[metric](temp_original, temp_enhanced))
+                    except TypeError:
+                        # If it raises a TypeError, call the function with the single argument
+                        metrics[metric].append(metric_functions[metric](temp_enhanced))
             else:
                 raise ValueError(f"Metric '{metric}' is not recognized.")
 
     return metrics
+
 
 def metrics_estimated(
         estimated_frames: dict[str, list], 
@@ -314,35 +323,35 @@ def metrics_estimated(
     # Iterate over each algorithm and its corresponding enhanced frames
     for algo, enhanced_frames in estimated_frames.items():
         # Compute metrics for the current algorithm's enhanced frames
+        print(f"Apply {to_compute} metrics on {algo} enhanced frames")
         all_metrics[algo] = apply_metrics(og_frames, enhanced_frames, to_compute, max_px)
 
     # print(f"Metrics : {all_metrics}")
     return all_metrics
 
 def plot_metrics(data):
+    """
+    Plot metrics for different algorithms individually.
+
+    Args:
+        data (dict): Dictionary containing algorithm names as keys and dictionaries of metric data as values.
+    """
     # Extract all metrics from the first algorithm entry
     metrics = list(data[next(iter(data))].keys())
 
-    # Number of algorithms and metrics
-    num_algorithms = len(data)
+    # Number of metrics
     num_metrics = len(metrics)
 
-    # Create a subplot for each metric
-    fig, axs = plt.subplots(num_metrics, 1, figsize=(10, 5 * num_metrics))
-
-    if num_metrics == 1:
-        axs = [axs]
-
     for i, metric in enumerate(metrics):
+        plt.figure(figsize=(10, 5))
+        
         for algo, algo_data in data.items():
             if metric in algo_data:
-                axs[i].plot(algo_data[metric], label=f"{algo}")
+                plt.plot(algo_data[metric], label=f"{algo}")
         
-        axs[i].set_title(f"{metric.upper()} for Different Algorithms")
-        axs[i].set_xlabel("Index")
-        axs[i].set_ylabel(metric.upper())
-        axs[i].legend()
-        axs[i].grid(True)
-
-    plt.tight_layout()
-    plt.show()
+        plt.title(f"{metric.upper()} for Different Algorithms")
+        plt.xlabel("Index")
+        plt.ylabel(metric.upper())
+        plt.legend()
+        plt.grid(True)
+        plt.show()

@@ -31,7 +31,6 @@ def SBNUCif_reg(frames, algo='FourierShift', lr=0.05, offset_only=True):
         all_frames_est.append(frame_est)
         frame_n_1 = frame  # Update the previous frame for motion detection
     
-    print(f"{len(all_frames_est)} frames estimated using SBNUC algorithm")
     return np.array(all_frames_est, dtype=frames[0].dtype)
 
 def SBNUCif_reg_frame(frame, frame_n_1, coeffs, lr=0.05, algo='FourierShift', offset_only=True):
@@ -96,8 +95,6 @@ def AdaSBNUCif_reg(frames, algo='FourierShift', lr=0.05, offset_only=True):
         all_frames_est.append(frame_est)
         frame_n_1 = frame  # Update the previous frame for motion detection
     
-    print(f"{len(all_frames_est)} frames estimated using SBNUC algorithm")
-    # breakpoint()
     return np.array(all_frames_est, dtype=frames[0].dtype)
 
 def AdaSBNUCif_reg_frame(frame, frame_n_1, coeffs, lr=0.05, algo='FourierShift', offset_only=True):

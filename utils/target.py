@@ -179,7 +179,7 @@ def kernel_sobel_3x3(kernel_3x3: list | np.ndarray, ) -> float:
         sobel_ker_y = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
         # If input is a list, convert to numpy array and apply Sobel filter
         if isinstance(kernel_3x3, list):
-            return np.sqrt((sum([sobel_ker_x[i][j] * kernel_3x3[i][j] for i in range(3) for j in range(3)])**2) + (sobel_ker_y([sobel_ker[i][j] * kernel_3x3[i][j] for i in range(3) for j in range(3)])**2))
+            return np.sqrt((sum([sobel_ker_x[i][j] * kernel_3x3[i][j] for i in range(3) for j in range(3)])**2) + (sobel_ker_y([sobel_ker_y[i][j] * kernel_3x3[i][j] for i in range(3) for j in range(3)])**2))
         # If input is a numpy array, apply Sobel filter directly
         if isinstance(kernel_3x3, np.ndarray):
             sobel_ker_x = np.array(sobel_ker_x, dtype=kernel_3x3.dtype)

@@ -30,7 +30,6 @@ def SBNUCIRFPA(frames: list | np.ndarray, eta: float | np.ndarray = 0.01, k_size
         frame_est, coeffs = SBNUCIRFPA_frame(frame, coeffs, eta, k_size, offset_only)
         all_frame_est.append(frame_est)
     
-    print(f"{len(all_frame_est)} frames estimated using SBNUCIRFPA algo")
     return np.array(all_frame_est, dtype=frames[0].dtype)
 
 def SBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, eta: float | np.ndarray = 0.01, k_size=3, offset_only = True) -> tuple[list | np.ndarray, dict]:
@@ -100,7 +99,7 @@ def SBNUCIRFPA_update_nuc(subframe: list | np.ndarray, g: float | np.ndarray, o:
     # Update coefficients using SGD
     return sgd_step(g, eta, e * yij, bias_g), sgd_step(o, eta, e, bias_o)
 
-def AdaSBNUCIRFPA(frames: list | np.ndarray, K: float | np.ndarray = 1., k_size=3, offset_only=True) -> np.ndarray:
+def AdaSBNUCIRFPA(frames: list | np.ndarray, K: float | np.ndarray = 0.1, k_size=3, offset_only=True) -> np.ndarray:
     """
     Apply the adaptive SBNUC method to a sequence of frames.
 
@@ -124,11 +123,10 @@ def AdaSBNUCIRFPA(frames: list | np.ndarray, K: float | np.ndarray = 1., k_size=
         frame_est, coeffs = AdaSBNUCIRFPA_frame(frame, coeffs, K, k_size, offset_only)
         all_frame_est.append(frame_est)
     
-    print(f"{len(all_frame_est)} frames estimated using AdaSBNUCIRFPA algo")
     return np.array(all_frame_est, frames[0].dtype)
 
 
-def AdaSBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, K: float | np.ndarray = 1., k_size=3, offset_only = True) -> tuple[list | np.ndarray, dict]:
+def AdaSBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, K: float | np.ndarray = 0.1, k_size=3, offset_only = True) -> tuple[list | np.ndarray, dict]:
     """
     Apply the adaptive SBNUC method to a single frame.
 
@@ -171,7 +169,7 @@ def AdaSBNUCIRFPA_frame(frame: list | np.ndarray, coeffs: dict, K: float | np.nd
             all_Xest[i].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
     return np.array(all_Xest, dtype=frame.dtype), coeffs
 
-def AdaSBNUCIRFPA_eta(K: float, subframe: list | np.ndarray, A=1.) -> float:
+def AdaSBNUCIRFPA_eta(K: float, subframe: list | np.ndarray, A=0.5) -> float:
     """
     Calculate the adaptive learning rate (eta) for SBNUC.
 
@@ -189,7 +187,7 @@ def AdaSBNUCIRFPA_eta(K: float, subframe: list | np.ndarray, A=1.) -> float:
     var = kernel_var_filtering(subframe)
     return K / (1 + A*(var**2))
 
-def AdaSBNUCIRFPA_reg(frames: list | np.ndarray, K: float | np.ndarray = 1., alpha: float | np.ndarray = 0.4, k_size=3) -> list | np.ndarray:
+def AdaSBNUCIRFPA_reg(frames: list | np.ndarray, K: float | np.ndarray = 0.1, alpha: float | np.ndarray = 0.05, k_size=3) -> list | np.ndarray:
     """
     Apply the adaptive SBNUC method with regularization to a sequence of frames.
 
@@ -216,7 +214,7 @@ def AdaSBNUCIRFPA_reg(frames: list | np.ndarray, K: float | np.ndarray = 1., alp
 def AdaSBNUCIRFPA_reg_frame(
         frame: list | np.ndarray, 
         coeffs: dict, coeffs_n_1: dict, 
-        K: float | np.ndarray = 0.1, alpha: float | np.ndarray = 0.4, 
+        K: float | np.ndarray = 0.1, alpha: float | np.ndarray = 0.05, 
         k_size=3 , offset_only = True
     ) -> tuple[list | np.ndarray, dict, dict]:
     """
