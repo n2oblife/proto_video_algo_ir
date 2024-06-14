@@ -11,6 +11,7 @@ from algorithms.RobustNUCIRFPA import *
 from algorithms.SBNUCcomplement import *
 # from algorithms.CompTempNUC import *
 from noise_gen import apply_noise
+from utils.data_handling import *
 
 def init():
     return
@@ -76,7 +77,12 @@ def build_nuc_algos():
     }
 
 
-def apply_nuc_algorithms(frames: np.ndarray, algorithms: List[str]=['SBNUCIRFPA'], algo_params: dict = {}) -> dict:
+def apply_nuc_algorithms(
+        frames: np.ndarray, 
+        algorithms: List[str]=['SBNUCIRFPA'], 
+        algo_params: dict = {},
+        save_path: str = None
+    ) -> dict:
     """
     Apply multiple NUC algorithms to a sequence of frames and return the results.
 
@@ -112,11 +118,47 @@ def apply_nuc_algorithms(frames: np.ndarray, algorithms: List[str]=['SBNUCIRFPA'
             params = algo_params.get(algo, {})
             # Apply the algorithm to the frames
             results[algo] = nuc_algorithms[algo](frames, **params)
+            if save_path:
+                save_frames(results[algo], save_path + '/' + algo + '.pkl')
         else:
             print(f"Warning: Algorithm '{algo}' is not recognized and will be skipped.")
 
     return results
 
+
+def load_all_frames(args: dict) -> np.ndarray:
+    """
+    Load and process frames based on provided arguments.
+
+    Args:
+        args (dict): A dictionary of arguments with keys such as 'clean', 'num_frames', 'width', and 'height'.
+
+    Returns:
+        tuple: A tuple containing clean frames, noisy frames, the number of frames to compute, and the noise array.
+    """
+    # Check if the 'clean' flag is set in the arguments
+    if args['clean']:
+        clean_frames = np.array(load_frames(args))
+        n_to_compute = min(len(clean_frames), args['num_frames'])
+        clean_frames = clean_frames[stable_frame_number:stable_frame_number + n_to_compute]
+        noisy_frames, noise = apply_noise(clean_frames, width=args['width'], height=args['height'])
+    else:
+        # If the 'clean' flag is not set, load noisy frames
+        noisy_frames = np.array(load_frames(args))
+        n_to_compute = min(len(noisy_frames), args['num_frames'])
+        noisy_frames = noisy_frames[stable_frame_number:stable_frame_number + n_to_compute]
+        
+        # Estimate the clean frames by applying a Gaussian filter to each noisy frame
+        clean_frames = np.array(
+            [frame_gauss_3x3_filtering(frame) for frame in tqdm(noisy_frames, desc="Estimating clean frame", unit="frame")], 
+            dtype=noisy_frames.dtype
+        )
+    
+    # Ensure noise is not None; if it is, initialize it with zeros of the same shape as clean_frames
+    if noise is None:
+        noise = np.zeros_like(clean_frames)
+
+    return clean_frames, noisy_frames, n_to_compute, noise
 
 
 # python main.py -p C:/Users/zKanit/Pictures/sbnuc_offset -w 640 -he 480 -d 14b -fps 60 -n 60 --show_video --clean
@@ -129,19 +171,19 @@ if __name__ == "__main__":
     args = build_args()
     stable_frame_number = args['stable_frame']
 
-
-    # Load video frames based on provided arguments, must be clean frames
-    if args['clean']:
-        clean_frames = np.array(load_frames(args))
-        n_to_compute = min(len(clean_frames), args['num_frames'])
-        clean_frames = clean_frames[stable_frame_number:stable_frame_number+n_to_compute]
-        noisy_frames, noise = apply_noise(clean_frames, widht=args['width'], height=args['height'])
+    # Load video frames based on provided arguments
+    if args['save_folder']:
+        if check_files_exist(args['save_folder'], ['clean_frames.pkl', 'noisy_frames.pkl', 'noise.pkl']) == {'clean_frames.pkl': True, 'noisy_frames.pkl': True, 'noise.pkl': True}:
+            clean_frames, noisy_frames, noise = load_data(args['save_folder'] + '/clean_frames.pkl'), load_data(args['save_folder'] + '/noisy_frames.pkl'), load_data(args['save_folder'] + '/noise.pkl')
+            n_to_compute = min(len(clean_frames), args['num_frames'])
+        else:
+            clean_frames, noisy_frames, n_to_compute, noise = load_all_frames(args)
+            save_frames(clean_frames, args['save_folder'] + '/clean_frames.pkl')
+            save_frames(noisy_frames, args['save_folder'] + '/noisy_frames.pkl')
+            save_frames(noise, args['save_folder'] + '/noise.pkl')
     else:
-        noisy_frames = np.array(load_frames(args))
-        n_to_compute = min(len(noisy_frames), args['num_frames'])
-        noisy_frames = noisy_frames[stable_frame_number:stable_frame_number+n_to_compute]
-        clean_frames = np.array([frame_gauss_3x3_filtering(frame) for frame in tqdm(noisy_frames, desc="Estimating clean frame", unit="frame")], dtype=noisy_frames.dtype)
-    
+        clean_frames, noisy_frames, n_to_compute, noise = load_all_frames(args)
+
     # If the user requested to show the video, display the noisy frames
     # if args['show_video']:
     #     print(" --- Showing noisy frames --- ")
@@ -149,12 +191,13 @@ if __name__ == "__main__":
 
     # Apply non-uniformity correction (NUC) algorithms to the frames
     estimated_frames = apply_nuc_algorithms(frames=noisy_frames[:n_to_compute],
-                                            algorithms=args['nuc_algorithm'])
+                                            algorithms=args['nuc_algorithm'],
+                                            save_path=args['save_folder'])
     
     
     # Compute specified metrics for the estimated frames compared to the original frames
     if args['metrics']:
-        metrics = metrics_estimated(estimated_frames, clean_frames, args['metrics'])
+        metrics = metrics_estimated(estimated_frames, clean_frames, args['metrics'], args['save_folder'])
 
     plot_metrics(metrics)
 

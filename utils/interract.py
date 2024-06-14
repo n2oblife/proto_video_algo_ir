@@ -238,8 +238,17 @@ def build_args():
     parser_options.append(ParserOptions(
         long="folder_path",
         short="p",
+        type=str,
         help="The path to the folder containing all the binary files of the video",
         required=True  # This argument is required
+    ))
+
+    # Add parser option for the folder path where to save results
+    parser_options.append(ParserOptions(
+        long="save_folder",
+        short="save",
+        type=str,
+        help="The path to the folder containing all results from this algorithm",
     ))
 
     # Add parser option for the width of the video

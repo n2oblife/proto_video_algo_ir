@@ -8,6 +8,7 @@ from scipy.ndimage import gaussian_filter
 from scipy.signal import convolve2d
 from tqdm import tqdm
 from utils.common import reshape_array
+from utils.data_handling import *
 
 def init_metrics()->dict[str, list]:
     """
@@ -301,6 +302,7 @@ def metrics_estimated(
         estimated_frames: dict[str, list], 
         og_frames: np.ndarray, 
         to_compute: list[str] = ['mse', 'psnr'], 
+        save_path:str = None,
         max_px=255
     ) -> dict[str, dict[str, list]]:
     """
@@ -325,6 +327,8 @@ def metrics_estimated(
         # Compute metrics for the current algorithm's enhanced frames
         print(f"Apply {to_compute} metrics on {algo} enhanced frames")
         all_metrics[algo] = apply_metrics(og_frames, enhanced_frames, to_compute, max_px)
+        if save_path:
+            save_dict(all_metrics[algo], save_path+'/'+algo+'_metrics.pkl')
 
     # print(f"Metrics : {all_metrics}")
     return all_metrics
