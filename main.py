@@ -162,7 +162,8 @@ def load_all_frames(args: dict) -> np.ndarray:
 
 
 # python main.py -p C:/Users/zKanit/Pictures/sbnuc_offset -w 640 -he 480 -d 14b -fps 60 -n 60 --show_video --clean
-    
+# python main.py -p C:\Users\zKanit\Pictures\***_no_nuc -save C:\Users\zKanit\Documents\***\proto_video_algo_ir\log -d 14b -nuc all -m all    
+
 if __name__ == "__main__":
     # Set up logging with INFO level to capture detailed runtime information
     set_logging_info()

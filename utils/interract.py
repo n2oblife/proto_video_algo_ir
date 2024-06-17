@@ -284,14 +284,14 @@ def build_args():
     parser_options.append(ParserOptions(
         long="show_video",
         short="s",
-        action='store_true',  # This makes it a boolean flag
+        action="store_true",  # This makes it a boolean flag
         help="Show the video if this flag is set",
     ))
     
     parser_options.append(ParserOptions(
         long="clean", 
         short="c",
-        action='store_true', # This makes it a boolean flag
+        action="store_true", # This makes it a boolean flag
         help="Flag to say if frames are clean or not", 
     ))
 
@@ -337,7 +337,7 @@ def build_args():
         long="nuc_algorithm", 
         short="nuc", 
         type=str, 
-        default='SBNUCIRFPA',
+        default="SBNUCIRFPA",
         nargs='+', 
         choices=['SBNUCIRFPA', 'AdaSBNUCIRFPA', 'AdaSBNUCIRFPA_reg',
                  'CstStatSBNUC', 'SBNUCLMS', 'SBNUCif_reg', 'AdaSBNUCif_reg',
@@ -354,8 +354,8 @@ def build_args():
         long="motion_algorithm", 
         short="mota", 
         type=str,
-        default='FourierShift', 
-        nargs='+',
+        default="FourierShift", 
+        nargs="+",
         choices=['OptFlow', 'BlockMotion', 'FourierShift'], 
         help="Algorithms to use for motion estimation (can specify multiple)"
     ))
@@ -365,7 +365,7 @@ def build_args():
         short="m", 
         type=str, 
         # default=['mse', 'psnr'],  # Default metrics to compute
-        nargs='+', 
+        nargs="+", 
         choices=['mse', 'psnr', 'roughness', 'ssim', 'cei', 'entropy', 'edge_preservation', 'nmse',
                  'all'], 
         help="Metrics to compute (can specify multiple)" 
