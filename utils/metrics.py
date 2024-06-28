@@ -324,11 +324,18 @@ def metrics_estimated(
 
     # Iterate over each algorithm and its corresponding enhanced frames
     for algo, enhanced_frames in estimated_frames.items():
-        # Compute metrics for the current algorithm's enhanced frames
-        print(f"Apply {to_compute} metrics on {algo} enhanced frames")
-        all_metrics[algo] = apply_metrics(og_frames, enhanced_frames, to_compute, max_px)
         if save_path:
-            save_dict(all_metrics[algo], save_path+'/'+algo+'_metrics.pkl')
+            if check_files_exist(save_path, [algo + '_metrics.pkl']):
+                all_metrics[algo] = load_data(save_path + '/' + algo + '_metrics.pkl')
+            else:
+                # Compute metrics for the current algorithm's enhanced frames
+                print(f"Apply {to_compute} metrics on {algo} enhanced frames")
+                all_metrics[algo] = apply_metrics(og_frames, enhanced_frames, to_compute, max_px)
+                save_dict(all_metrics[algo], save_path+'/'+algo+'_metrics.pkl')
+        else:
+            # Compute metrics for the current algorithm's enhanced frames
+            print(f"Apply {to_compute} metrics on {algo} enhanced frames")
+            all_metrics[algo] = apply_metrics(og_frames, enhanced_frames, to_compute, max_px)
 
     # print(f"Metrics : {all_metrics}")
     return all_metrics

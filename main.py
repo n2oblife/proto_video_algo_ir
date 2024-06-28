@@ -13,22 +13,7 @@ from algorithms.SBNUCcomplement import *
 from noise_gen import apply_noise
 from utils.data_handling import *
 
-def init():
-    return
 
-def update():
-    return
-
-def estimate():
-    return
-
-def metrics():
-    return
-
-def build_parameters(algo_used:list[str]):
-    return{
-
-    }
 
 def build_nuc_algos():
     """
@@ -114,12 +99,20 @@ def apply_nuc_algorithms(
 
     for algo in algorithms:
         if algo in nuc_algorithms:
-            # Get the parameters for the current algorithm if provided
-            params = algo_params.get(algo, {})
-            # Apply the algorithm to the frames
-            results[algo] = nuc_algorithms[algo](frames, **params)
             if save_path:
-                save_frames(results[algo], save_path + '/' + algo + '.pkl')
+                if check_files_exist(save_path, [algo + '.pkl']): 
+                    results[algo] = load_data(save_path + '/' + algo + '.pkl')
+                else :
+                    # Get the parameters for the current algorithm if provided
+                    params = algo_params.get(algo, {})
+                    # Apply the algorithm to the frames
+                    results[algo] = nuc_algorithms[algo](frames, **params)
+                    save_frames(results[algo], save_path + '/' + algo + '.pkl')
+            else:
+                # Get the parameters for the current algorithm if provided
+                params = algo_params.get(algo, {})
+                # Apply the algorithm to the frames
+                results[algo] = nuc_algorithms[algo](frames, **params)
         else:
             print(f"Warning: Algorithm '{algo}' is not recognized and will be skipped.")
 
@@ -136,6 +129,9 @@ def load_all_frames(args: dict) -> np.ndarray:
     Returns:
         tuple: A tuple containing clean frames, noisy frames, the number of frames to compute, and the noise array.
     """
+    # Initialize noise to None
+    noise = None
+
     # Check if the 'clean' flag is set in the arguments
     if args['clean']:
         clean_frames = np.array(load_frames(args))
@@ -153,7 +149,7 @@ def load_all_frames(args: dict) -> np.ndarray:
             [frame_gauss_3x3_filtering(frame) for frame in tqdm(noisy_frames, desc="Estimating clean frame", unit="frame")], 
             dtype=noisy_frames.dtype
         )
-    
+
     # Ensure noise is not None; if it is, initialize it with zeros of the same shape as clean_frames
     if noise is None:
         noise = np.zeros_like(clean_frames)

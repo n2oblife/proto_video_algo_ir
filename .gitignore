@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 *.bin
 *.raw
-*.log
+*log/*
 
 # C extensions
 *.so
