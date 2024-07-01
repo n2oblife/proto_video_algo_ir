@@ -167,6 +167,7 @@ if __name__ == "__main__":
     # Parse command-line arguments to get user inputs
     args = build_args()
     stable_frame_number = args['stable_frame']
+    breakpoint()
 
     # Load video frames based on provided arguments
     if args['save_folder']:
@@ -182,8 +183,8 @@ if __name__ == "__main__":
         clean_frames, noisy_frames, n_to_compute, noise = load_all_frames(args)
 
     # If the user requested to show the video, display the noisy frames
-    # if args['show_video']:
-    #     print(" --- Showing noisy frames --- ")
+    if args['show_video']:
+        print(" --- Showing noisy frames --- ")
     #     show_video(frames=noisy_frames, title='noisy frames', frame_rate=args['framerate'])
 
     # Apply non-uniformity correction (NUC) algorithms to the frames
@@ -195,8 +196,7 @@ if __name__ == "__main__":
     # Compute specified metrics for the estimated frames compared to the original frames
     if args['metrics']:
         metrics = metrics_estimated(estimated_frames, clean_frames, args['metrics'], args['save_folder'])
-
-    plot_metrics(metrics)
+        plot_metrics(metrics)
 
     # If the user requested to show the video, display the estimated frames
     if args['show_video']:

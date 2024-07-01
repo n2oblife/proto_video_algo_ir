@@ -268,7 +268,7 @@ def apply_metrics(
         "entropy": calculate_entropy,
         "edge_preservation": calculate_edge_preservation,
         "nmse": calculate_nrmse,
-        "roughness": calculate_roughness
+        # "roughness": calculate_roughness
     }
 
     if to_compute==['all']:
