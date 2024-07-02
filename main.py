@@ -167,7 +167,6 @@ if __name__ == "__main__":
     # Parse command-line arguments to get user inputs
     args = build_args()
     stable_frame_number = args['stable_frame']
-    breakpoint()
 
     # Load video frames based on provided arguments
     if args['save_folder']:
@@ -184,8 +183,22 @@ if __name__ == "__main__":
 
     # If the user requested to show the video, display the noisy frames
     if args['show_video']:
-        print(" --- Showing noisy frames --- ")
-    #     show_video(frames=noisy_frames, title='noisy frames', frame_rate=args['framerate'])
+        showing_input = input("Which frames to show? \nClean or Noisy or both: c / n / b\n")
+
+        if showing_input == "c":
+            print(" --- Showing clean frames --- ")
+            show_video(frames=clean_frames, title='clean frames', frame_rate=args['framerate'])
+        elif showing_input == "n":
+            print(" --- Showing noisy frames --- ")
+            show_video(frames=noisy_frames, title='noisy frames', frame_rate=args['framerate'])
+        elif showing_input == "b":
+            print(" --- Showing clean frames --- ")
+            show_video(frames=clean_frames, title='clean frames', frame_rate=args['framerate'])
+            print(" --- Showing noisy frames --- ")
+            show_video(frames=noisy_frames, title='noisy frames', frame_rate=args['framerate'])
+        else:
+            print("Invalid input. Please enter 'c' for clean frames or 'n' for noisy frames and 'all' for both of them.")
+
 
     # Apply non-uniformity correction (NUC) algorithms to the frames
     estimated_frames = apply_nuc_algorithms(frames=noisy_frames[:n_to_compute],

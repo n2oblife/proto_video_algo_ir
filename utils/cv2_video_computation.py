@@ -257,6 +257,7 @@ def show_video(frames:list|np.ndarray|cv2.Mat, title='frames', frame_rate=30, eq
 
 def showing_all_estimated(estimated_frames, framerate):
     for algo in estimated_frames:
+        print(f" --- Showing {algo} frames --- ")
         show_video(frames=estimated_frames[algo], 
                    title=algo,
                    frame_rate=framerate)
@@ -295,10 +296,6 @@ def load_frames(args: dict) -> list:
 
     # Print the number of frames that were loaded and stored
     print(f"{len(frames)} frames stored")
-
-    # If the 'show_video' flag is True, display the video
-    if args['show_video']:
-        show_video(frames, equalize=True, frame_rate=args['framerate'])
 
     # Return the list of frames
     return frames

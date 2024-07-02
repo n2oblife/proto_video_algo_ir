@@ -219,6 +219,47 @@ def add_argument_to_parser(parser, option: ParserOptions):
     else:
         parser.add_argument(f'--{option.long}', **args)
 
+def build_args_show_result():
+    """
+    Build and parse command-line arguments for the program.
+
+    This function creates a dict of parser options for the command-line arguments
+    required by the program. The arguments are parsed and returned.
+
+    Arguments : folder_path, framerate
+
+    Returns:
+        Namespace: A namespace containing the parsed arguments.
+    """
+    parser_options = []  # Initialize an empty list to store parser options
+
+    # Add parser option for the folder path containing binary files of the video
+    parser_options.append(ParserOptions(
+        long="folder_path",
+        short="p",
+        type=str,
+        help="The path to the folder containing the video and the logs",
+        required=True  # This argument is required
+    ))
+
+    # Add parser option for the framerate per second
+    parser_options.append(ParserOptions(
+        long="framerate",
+        short="fps",
+        type=float,
+        default=30,  # Default framerate is set to 60 FPS
+        help="The framerate per second for displaying the video"
+    ))
+
+    # Parse the input arguments using the defined parser options
+    args = parse_input(
+        parser_config=parser_options,
+        prog_name="IR SBNUC prototypes"  # Program name for the parser
+    )
+
+    print(" --- Input parsed --- ")  # Indicate that input has been successfully parsed
+    return args  # Return the parsed arguments
+
 def build_args():
     """
     Build and parse command-line arguments for the program.

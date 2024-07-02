@@ -99,7 +99,7 @@ def gen_ghosting(clean_frames:np.ndarray, text="Ghosting", color=None):
     ghosting_frames = []
     if not color:
         color = 0.98*np.mean(sum_frames_to_heatmap(clean_frames))
-    # breakpoint()
+
     for frame in tqdm(clean_frames, desc="Adding ghosting to clean video", unit="frame"):
         ghosting_frames.append(frame_gen_ghosting(frame, text, color))
     return np.array(ghosting_frames, dtype=clean_frames.dtype)
