@@ -24,7 +24,11 @@ if __name__ == "__main__":
         'SBNUC_smartCam_pipeA',
         'SBNUC_smartCam_pipeB',
         'SBNUC_smartCam_pipeC',
-        'SBNUCcomplement'
+        'SBNUCcomplement',
+        'morgan',
+        'morgan_moving',
+        'morgan_filt',
+        'morgan_filt_haut'
     ]
 
     while True:
@@ -35,9 +39,12 @@ if __name__ == "__main__":
             if input_break != "n":
                 break
         else :
-            frames = load_data(args['folder_path'] + f'/{showing_input}.pkl')
-            print(f" --- Showing {showing_input} frames --- ")
-            show_video(frames=frames, 
-                    title=showing_input,
-                    frame_rate=args['framerate'])
+            try:
+                frames = load_data(args['folder_path'] + f'/{showing_input}.pkl')
+                print(f" --- Showing {showing_input} frames --- ")
+                show_video(frames=frames, 
+                        title=showing_input,
+                        frame_rate=args['framerate'])
+            except FileNotFoundError:
+                print(f"Sorry the file {showing_input}.pkl was not found.\n Please try again.\n")
     

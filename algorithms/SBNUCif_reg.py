@@ -50,6 +50,7 @@ def SBNUCif_reg_frame(frame, frame_n_1, coeffs, lr=0.05, algo='FourierShift', of
     """
     # Estimate the motion vector between the previous frame and the current frame
     di, dj = motion_estimation_frame(prev_frame=frame_n_1, curr_frame=frame, algo=algo)
+    breakpoint()
     
     all_Xest = []  # List to store estimated pixel values for the frame
     

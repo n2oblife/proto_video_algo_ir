@@ -35,7 +35,7 @@ if __name__ == '__main__':
     python Mavlink_temp.py >log\temperature.log
     """
     # PARAMETERS
-    conf_path = 'C:\Users\zKanit\Documents\Bertin_local\proto_video_algo_ir\algorithms\CompTempNUC_conf.yaml'
+    # conf_path = 'C:\Users\zKanit\Documents\Bertin_local\proto_video_algo_ir\algorithms\CompTempNUC_conf.yaml'
 
     # main
     config = parse_yaml_config(conf_path)

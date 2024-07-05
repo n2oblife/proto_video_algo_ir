@@ -10,6 +10,7 @@ from algorithms.SBNUC_smartCam import *
 from algorithms.RobustNUCIRFPA import *
 from algorithms.SBNUCcomplement import *
 # from algorithms.CompTempNUC import *
+from algorithms.morgan import *
 from noise_gen import apply_noise
 from utils.data_handling import *
 
@@ -58,7 +59,11 @@ def build_nuc_algos():
         'SBNUC_smartCam_pipeA': SBNUC_smartCam_pipeA,  # Function to apply a NUC smart camera algorithm using pipeline A
         'SBNUC_smartCam_pipeB': SBNUC_smartCam_pipeB,  # Function to apply a NUC smart camera algorithm using pipeline B
         'SBNUC_smartCam_pipeC': SBNUC_smartCam_pipeC,  # Function to apply a NUC smart camera algorithm using pipeline C
-        'SBNUCcomplement': SBNUCcomplement       # Function to apply a complement to the first filter
+        'SBNUCcomplement': SBNUCcomplement,       # Function to apply a complement to the first filter
+        'morgan':morgan,
+        'morgan_moving':morgan_moving,
+        'morgan_filt' : morgan_filt,
+        'morgan_filt_haut' : morgan_filt_haut
     }
 
 
