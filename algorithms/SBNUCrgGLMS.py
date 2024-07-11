@@ -28,7 +28,7 @@ def init_S_M(
     }
 
 
-def CstStatSBNUC(frames: list | np.ndarray, threshold=0., alpha=0.01, offset_only=True) -> np.ndarray:
+def CstStatSBNUC_og(frames: list | np.ndarray, threshold=0., alpha=0.01, offset_only=True) -> np.ndarray:
     """
     Apply the scene-based non-uniformity correction (SBNUC) method to a sequence of frames.
 
@@ -147,8 +147,97 @@ def constant_statistics_sbunc_update_nuc(Yij, Yij_n_1, S_n_1, M_n_1, threshold=0
         return 1 / S_n, -M_n / S_n, S_n, M_n
     else:
         return 1 / S_n_1, -M_n_1 / S_n_1, S_n_1, M_n_1
+    
+def CstStatSBNUC(frames: list | np.ndarray, threshold=0., alpha=0.01, offset_only=True) -> np.ndarray:
+    """
+    Apply the scene-based non-uniformity correction (SBNUC) method to a sequence of frames.
 
-def SBNUCLMS(frames: list | np.ndarray, K=0.1, M=0.5, threshold=0, k_size=3, offset_only=True) -> np.ndarray:
+    This function iterates through a sequence of frames and applies non-uniformity correction to each frame
+    based on initial coefficients. The corrected frames are collected and returned as a list or numpy array.
+
+    Args:
+        frames (list | np.ndarray): A list or array of frames to be corrected.
+        threshold (float, optional): Error threshold for updating coefficients. Defaults to 0.
+        k_size (int, optional): The size of the kernel used for local estimation. Defaults to 3.
+        offset_only (bool, optional): Whether to only update the offset coefficient. Defaults to True.
+        
+    Returns:
+        np.ndarray: An array of corrected frames.
+    """
+    # Initialize variables
+    all_frames_est = []
+    frame_n_1 = frames[0]
+
+    # Initialize correction coefficients and SBNUC coefficients
+    corr_coeffs = init_nuc(frames[0])
+    sbnuc_coeffs = init_S_M(frames[0])
+
+    # Use tqdm to show progress while iterating through frames
+    for frame in tqdm(frames[1:], desc="CstStatSBNUC processing", unit="frame"):
+        # Estimate the current frame using the previous frame
+        frame_est, corr_coeffs, sbnuc_coeffs = CstStatSBNUC_frame_array(
+            frame=frame, frame_n_1=frame_n_1, 
+            corr_coeffs=corr_coeffs, sbnuc_coeffs=sbnuc_coeffs, 
+            threshold=threshold, alpha=alpha, offset_only=offset_only
+        )
+        all_frames_est.append(frame_est)
+        
+        # Update the previous frame for motion detection
+        frame_n_1 = frame
+    
+    return np.array(all_frames_est, dtype=frames[0].dtype) 
+
+def CstStatSBNUC_frame_array(
+        frame: np.ndarray,
+        frame_n_1: np.ndarray,
+        corr_coeffs: dict[str, np.ndarray],
+        sbnuc_coeffs: dict[str, np.ndarray],
+        threshold=0.,
+        alpha=0.01,
+        offset_only=True
+    ) -> tuple[np.ndarray, dict[str, np.ndarray], dict[str, np.ndarray]]:
+    """
+    Apply the SBNUC method to a single frame.
+
+    This function processes a single frame using the provided coefficients and updates them.
+    It returns the corrected frame along with the updated coefficients.
+
+    Args:
+        frame (np.ndarray): A single frame to be corrected.
+        frame_n_1 (np.ndarray): The previous frame.
+        corr_coeffs (dict[str, np.ndarray]): The coefficients used for the correction.
+        sbnuc_coeffs (dict[str, np.ndarray]): The SBNUC coefficients for mean and MAD.
+        threshold (float, optional): Error threshold for updating coefficients. Defaults to 0.
+        alpha (float, optional): Exponential weighting factor. Defaults to 0.5.
+        offset_only (bool, optional): Whether to only update the offset coefficient. Defaults to True.
+
+    Returns:
+        tuple[np.ndarray, dict[str, np.ndarray], dict[str, np.ndarray]]: The corrected frame and updated coefficients.
+    """
+    # Initialize array to store estimated pixel values for the frame
+    all_Xest = np.empty_like(frame)
+
+    # Update coefficients and estimate corrected pixel values
+    if offset_only:
+        # Update only the offset coefficient
+        _, corr_coeffs['o'], sbnuc_coeffs['s'], sbnuc_coeffs['m'] = constant_statistics_sbunc_update_nuc(
+            frame, frame_n_1,
+            sbnuc_coeffs["s"], sbnuc_coeffs["m"],
+            threshold, alpha
+        )
+    else:
+        # Update both gain and offset coefficients
+        corr_coeffs['g'], corr_coeffs['o'], sbnuc_coeffs['s'], sbnuc_coeffs['m'] = constant_statistics_sbunc_update_nuc(
+            frame, frame_n_1,
+            sbnuc_coeffs["s"], sbnuc_coeffs["m"],
+            threshold, alpha
+        )
+    all_Xest = Xest(corr_coeffs["g"], frame, corr_coeffs["o"])
+
+    return all_Xest, corr_coeffs, sbnuc_coeffs
+
+
+def SBNUCLMS_og(frames: list | np.ndarray, K=0.1, M=0.5, threshold=0, k_size=3, offset_only=True) -> np.ndarray:
     """
     Apply the scene-based non-uniformity correction (SBNUC) method to a sequence of frames.
 
@@ -235,3 +324,93 @@ def SBNUCLMS_eta(subframe, K, M) -> float:
     """
     # Compute the variance of the kernel and use it to calculate the learning rate
     return K / (1 + (M**2) * (kernel_var_filtering(subframe)**2))
+
+
+def SBNUCLMS(frames: list | np.ndarray, K=0.1, M=0.5, threshold=0, k_size=3, offset_only=True) -> np.ndarray:
+    """
+    Apply the scene-based non-uniformity correction (SBNUC) method to a sequence of frames.
+
+    This function iterates through a sequence of frames and applies non-uniformity correction to each frame
+    based on initial coefficients. The corrected frames are collected and returned as a list or numpy array.
+
+    Args:
+        frames (list | np.ndarray): A list or array of frames to be corrected.
+        K (float): Maximum step size for the update. Defaults to 0.1.
+        M (float): Data normalization factor. Defaults to 0.5.
+        threshold (float, optional): Error threshold for the update. Defaults to 0.
+        k_size (int, optional): The size of the kernel used for local estimation. Defaults to 3.
+        offset_only (bool, optional): Whether to only update the offset coefficient. Defaults to True.
+
+    Returns:
+        np.ndarray: A numpy array of corrected frames.
+    """
+    all_frames_est = []  # List to store the estimated (corrected) frames
+    corr_coeffs = init_nuc(frames[0])  # Initialize the correction coefficients based on the first frame
+    Z = np.full(frames[0].shape, np.inf, dtype=frames[0].dtype)  # Initialize the Z matrix with infinite values
+
+    # Use tqdm to show progress while iterating through frames
+    for frame in tqdm(frames, desc="SBNUCLMS processing", unit="frame"):
+        # Estimate the current frame using SBNUCLMS_frame function
+        frame_est, corr_coeffs = SBNUCLMS_frame_array(frame, corr_coeffs, Z, K, M, threshold, k_size, offset_only)
+        all_frames_est.append(frame_est)  # Append the estimated frame to the list
+
+    return np.array(all_frames_est, dtype=frames[0].dtype)  # Convert the list of frames to a numpy array and return it
+
+def SBNUCLMS_frame_array(frame: np.ndarray, corr_coeffs: dict, Z: np.ndarray, K=0.1, M=0.5, threshold=0, k_size=3, offset_only=True) -> tuple[np.ndarray, dict]:
+    """
+    Apply the SBNUC method to a single frame.
+
+    This function processes a single frame using the provided coefficients and updates them.
+    It returns the corrected frame along with the updated coefficients.
+
+    Args:
+        frame (np.ndarray): A single frame to be corrected.
+        corr_coeffs (dict): The coefficients used for the correction.
+        Z (np.ndarray): The matrix for storing intermediate values.
+        K (float): Maximum step size for the update. Defaults to 0.1.
+        M (float): Data normalization factor. Defaults to 0.5.
+        threshold (float, optional): Error threshold for the update. Defaults to 0.
+        k_size (int, optional): The size of the kernel used for local estimation. Defaults to 3.
+        offset_only (bool, optional): Whether to only update the offset coefficient. Defaults to True.
+
+    Returns:
+        tuple[np.ndarray, dict]: The corrected frame and updated coefficients.
+    """
+    # Apply a Gaussian filter to smooth the frame
+    B = gaussian_filter(frame, sigma=k_size)
+
+    # Compute the error between the filtered frame and Z
+    Eij = compute_error(B, Z)
+
+    # Update Z with the current value if the error exceeds the threshold
+    Z = np.where(Eij >= threshold, B, Z)
+
+    # Compute the learning rate for each pixel using SBNUCLMS_eta
+    eta = SBNUCLMS_eta_array(frame, k_size, K, M)
+
+    # Update the offset coefficient using stochastic gradient descent
+    corr_coeffs["o"] = sgd_step(corr_coeffs["o"], eta, Eij)
+
+    # Update the gain coefficient if offset_only is False
+    if not offset_only:
+        corr_coeffs["g"] = sgd_step(corr_coeffs["g"], eta, Eij * frame)
+
+    # Estimate corrected pixel values
+    all_Xest = Xest(corr_coeffs["g"], frame, corr_coeffs["o"])
+
+    return all_Xest, corr_coeffs  # Return the corrected frame and updated coefficients
+
+def SBNUCLMS_eta_array(frame, k_size, K, M) -> float:
+    """
+    Compute the learning rate for a given subframe in the SBNUC method.
+
+    Args:
+        subframe (list | np.ndarray): A subframe (kernel) extracted from the original frame.
+        K (float): Maximum step size for the update.
+        M (float): Data normalization factor.
+
+    Returns:
+        float: The computed learning rate.
+    """
+    # Compute the variance of the kernel and use it to calculate the learning rate
+    return K / (1 + (M**2) * (frame_var_filtering(frame, k_size)**2))

@@ -385,7 +385,7 @@ def build_args():
                  'CompTempNUC', 'NUCnlFilter', 
                  'RobustNUCIRFPA', 'AdaRobustNUCIRFPA', 
                  'SBNUC_smartCam_pipeA', 'SBNUC_smartCam_pipeB', 'SBNUC_smartCam_pipeC',
-                 'SBNUCcomplement', 
+                 'SBNUC_smartCam_own_pipe', 'SBNUCcomplement', 
                  'morgan', 'morgan_moving', 'morgan_filt', 'morgan_filt_haut',
                  'all'], 
         help="Algorithms to use for nuc adaptation (can specify multiple)" 

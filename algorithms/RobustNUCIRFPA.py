@@ -7,7 +7,13 @@ from utils.common import *
 from utils.target import *
 from motion.motion_estimation import *
 
-def RobustNUCIRFPA(frames: list | np.ndarray, offset_only=True):
+def RobustNUCIRFPA(
+        frames: list | np.ndarray, 
+        alpha=0.01,
+        ada=True,
+        algo='FourierShift',
+        offset_only=True
+    ):
     """
     Apply the RobustNUCIRFPA algorithm to a sequence of frames.
 
@@ -20,18 +26,35 @@ def RobustNUCIRFPA(frames: list | np.ndarray, offset_only=True):
     """
     all_frames_est = []
     coeffs = init_nuc(frames[0])  # Initialize NUC coefficients
-    for frame in tqdm(frames, desc="RobustNUCIRFPA algorithm", unit="frame"):
+    frame_n_1 = frames[0]
+    for frame in tqdm(frames[1:], desc="RobustNUCIRFPA algorithm", unit="frame"):
         # Estimate the current frame using the previous frame
         if offset_only:
-            frame_est, _, coeffs['o'] = RobustNUCIRFPA_frame(frame, coeffs)
+            frame_est, _, coeffs['o'] = RobustNUCIRFPA_frame(
+                frame=frame,
+                coeffs=coeffs,
+                alpha=alpha,
+                ada=ada,
+                frame_n_1=frame_n_1,
+                algo=algo
+            )
         else:
-            frame_est, coeffs['g'], coeffs['o'] = RobustNUCIRFPA_frame(frame, coeffs)
+            frame_est, coeffs['g'], coeffs['o'] = RobustNUCIRFPA_frame(
+                frame=frame,
+                coeffs=coeffs,
+                alpha=alpha,
+                ada=ada,
+                frame_n_1=frame_n_1,
+                algo=algo
+            )
         all_frames_est.append(frame_est)
+        frame_n_1 = frame
     return np.array(all_frames_est, dtype=frames.dtype)
 
 def RobustNUCIRFPA_frame(
         frame: list | np.ndarray, 
         coeffs, 
+        alpha = 0.01,
         ada=True, 
         frame_n_1=None, 
         algo='FourierShift'
@@ -68,7 +91,6 @@ def RobustNUCIRFPA_frame(
             o=coeffs['o']
         )
     Eij = X_est - T
-    alpha = 0.5
     return X_est, sgd_step(coeffs['g'], alpha, Eij * frame), sgd_step(coeffs['o'], alpha, Eij)
 
 def eij(Eij, mu, sig, k=3):
@@ -104,7 +126,13 @@ def apply_eij_elementwise(error_image, k=3):
     sig = np.std(error_image)
     return np.vectorize(lambda x: eij(x, mu, sig, k))(error_image)
 
-def AdaRobustNUCIRFPA(frames: list | np.ndarray, offset_only=True, alpha_m=0.05):
+def AdaRobustNUCIRFPA(
+        frames: list | np.ndarray, 
+        alpha_m=0.05,
+        algo='FourierShift',
+        offset_only=True, 
+        ada=True
+    ):
     """
     Apply the Adaptive RobustNUCIRFPA algorithm to a sequence of frames.
 
@@ -116,14 +144,30 @@ def AdaRobustNUCIRFPA(frames: list | np.ndarray, offset_only=True, alpha_m=0.05)
         np.ndarray: Estimated frames after applying Adaptive RobustNUCIRFPA.
     """
     all_frames_est = []
+    frame_n_1 = frames[0]
     coeffs = init_nuc(frames[0])  # Initialize NUC coefficients
-    for frame in tqdm(frames, desc="Adaptive RobustNUCIRFPA algorithm", unit="frame"):
+    for frame in tqdm(frames[1:], desc="Adaptive RobustNUCIRFPA algorithm", unit="frame"):
         # Estimate the current frame using the previous frame
         if offset_only:
-            frame_est, _, coeffs['o'] = AdaRobustNUCIRFPA_frame(frame, coeffs, alpha_m=alpha_m)
+            frame_est, _, coeffs['o'] = AdaRobustNUCIRFPA_frame(
+                frame=frame,
+                coeffs=coeffs,
+                ada=ada,
+                frame_n_1=frame_n_1,
+                algo=algo,
+                alpha_m=alpha_m
+            )
         else:
-            frame_est, coeffs['g'], coeffs['o'] = AdaRobustNUCIRFPA_frame(frame, coeffs, alpha_m=alpha_m)
+            frame_est, coeffs['g'], coeffs['o'] = AdaRobustNUCIRFPA_frame(
+                frame=frame,
+                coeffs=coeffs,
+                ada=ada,
+                frame_n_1=frame_n_1,
+                algo=algo,
+                alpha_m=alpha_m
+            )
         all_frames_est.append(frame_est)
+        frame_n_1 = frame
     return np.array(all_frames_est, dtype=frames.dtype)
 
 def AdaRobustNUCIRFPA_frame(

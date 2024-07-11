@@ -44,7 +44,7 @@ def SBNUC_smartCam_pipeA_frame(frame:list|np.ndarray, m_k, alpha=2**(-8)):
     high_passed = frame_military_3x3_filtering(frame)
     # high_passed = frame_sobel_3x3_filtering(frame)
     m_k = frame_exp_window_filtering(high_passed, m_k, alpha)
-    return frame - m_k, m_k
+    return SBNUC_smartCam_apply_col_corr(frame, m_k), m_k
 
 def SBNUC_smartCam_pipeB(frames:list|np.ndarray, alpha=2**(-8), alpha_p=2**(-12)):
     """
@@ -155,10 +155,37 @@ def SBNUC_smartCam_col_corr(frame:list|np.ndarray, m_k_p:list|np.ndarray, alpha_
     Returns:
         np.ndarray: Updated column-level correction map.
     """
-    for j in range(len(frame[0])):
+    if isinstance(frame, list):
+        for j in range(len(frame[0])):
+            for i in range(len(frame)):
+                m_k_p[i] = exp_window(frame[i][j], m_k_p[i], alpha_p)
+        return m_k_p
+    elif isinstance(frame, np.ndarray):
+        return (1 - alpha_p) * m_k_p + alpha_p * np.mean(frame, axis=0)
+    else:
+        raise NotImplementedError
+
+def SBNUC_smartCam_row_corr(frame:list|np.ndarray, m_k_r:list|np.ndarray, alpha_p=2**(-12)):
+    """
+    Apply column-level correction using exponential window filtering.
+
+    Args:
+        frame (np.ndarray): Input frame.
+        m_k_p (np.ndarray): Previous column-level correction map.
+        alpha_p (float, optional): Alpha parameter for column-level correction. Defaults to 2**(-12).
+
+    Returns:
+        np.ndarray: Updated column-level correction map.
+    """
+    if isinstance(frame, list):
         for i in range(len(frame)):
-            m_k_p[i] = exp_window(frame[i][j], m_k_p[i], alpha_p)
-    return m_k_p
+            for j in range(len(frame[0])):
+                m_k_r[j] = exp_window(frame[i][j], m_k_r[j], alpha_p)
+        return m_k_r
+    elif isinstance(frame, np.ndarray):
+        return (1 - alpha_p) * m_k_r + alpha_p * np.mean(frame, axis=1)
+    else:
+        raise NotImplementedError
 
 def SBNUC_smartCam_apply_col_corr(frame:list|np.ndarray, m_k_p:list|np.ndarray):
     """
@@ -171,8 +198,63 @@ def SBNUC_smartCam_apply_col_corr(frame:list|np.ndarray, m_k_p:list|np.ndarray):
     Returns:
         np.ndarray: Corrected frame.
     """
-    correctec_im = np.array(frame, dtype=frame.dtype)
-    for j in range(len(frame[0])):
-        for i in range(len(frame)):
-            correctec_im[i][j] = frame[i][j] - m_k_p[i]
-    return correctec_im
+    if isinstance(frame, list):
+        correctec_im = np.array(frame, dtype=frame.dtype)
+        for j in range(len(frame[0])):
+            for i in range(len(frame)):
+                correctec_im[i][j] = frame[i][j] - m_k_p[i]
+        return correctec_im
+    elif isinstance(frame, np.ndarray):
+        correctec_im = frame - m_k_p + 2**13
+        return np.where(correctec_im < 0, 0, correctec_im)
+
+
+def SBNUC_smartCam_own_pipe(frames:list|np.ndarray, alpha=2**(-8), alpha_p=2**(-12)):
+    """
+    Apply the SBNUC_smartCam algorithm pipeline B to a sequence of frames.
+
+    Args:
+        frames (list | np.ndarray): Input frames.
+        alpha (float, optional): Alpha parameter for pixel-level correction. Defaults to 2**(-8).
+        alpha_p (float, optional): Alpha parameter for column-level correction. Defaults to 2**(-12).
+
+    Returns:
+        np.ndarray: Estimated frames after applying pipeline B.
+    """
+    all_frames_est = []
+    m_k = np.zeros(frames[0].shape, dtype=frames.dtype)
+    m_k_p = np.zeros(len(frames[0]), dtype=frames.dtype)
+    m_k_r = np.zeros(len(frames[0]), dtype=frames.dtype)
+    for frame in tqdm(frames, desc="SBNUC_smartCam algorithm pipeline B", unit="frame"):
+        frame_est, m_k, m_k_p, m_k_r = SBNUC_smartCam_pipeB_frame(
+            frame, m_k, m_k_p, m_k_r, alpha, alpha_p
+            )
+        all_frames_est.append(frame_est)
+    return np.array(all_frames_est, dtype=frames[0].dtype)
+
+def SBNUC_smartCam_own_pipe_frame(
+        frame:list|np.ndarray, 
+        m_k:list|np.ndarray, 
+        m_k_p:list|np.ndarray, 
+        m_k_r:list|np.ndarray, 
+        alpha=2**(-8), alpha_p=2**(-12)
+    )->np.ndarray:
+    """
+    Process a single frame using pipeline B.
+
+    Args:
+        frame (np.ndarray): Input frame.
+        m_k (np.ndarray): Previous pixel-level correction map.
+        m_k_p (np.ndarray): Previous column-level correction map.
+        alpha (float, optional): Alpha parameter for pixel-level correction. Defaults to 2**(-8).
+        alpha_p (float, optional): Alpha parameter for column-level correction. Defaults to 2**(-12).
+
+    Returns:
+        tuple: (Estimated frame, updated pixel-level correction map, updated column-level correction map)
+    """
+    high_passed = frame_military_3x3_filtering(frame)
+    # high_passed = frame_sobel_3x3_filtering(frame)
+    m_k_p = SBNUC_smartCam_col_corr(frame, m_k_p, alpha_p)
+    m_k_r = SBNUC_smartCam_row_corr(frame, m_k_r, alpha_p)
+    m_k = frame_exp_window_filtering(high_passed, m_k, alpha)
+    return SBNUC_smartCam_apply_col_corr(frame, m_k_p+m_k_r) - m_k, m_k, m_k_p, m_k_r

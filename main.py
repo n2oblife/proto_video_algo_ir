@@ -59,6 +59,7 @@ def build_nuc_algos():
         'SBNUC_smartCam_pipeA': SBNUC_smartCam_pipeA,  # Function to apply a NUC smart camera algorithm using pipeline A
         'SBNUC_smartCam_pipeB': SBNUC_smartCam_pipeB,  # Function to apply a NUC smart camera algorithm using pipeline B
         'SBNUC_smartCam_pipeC': SBNUC_smartCam_pipeC,  # Function to apply a NUC smart camera algorithm using pipeline C
+        'SBNUC_smartCam_own_pipe':SBNUC_smartCam_own_pipe, 
         'SBNUCcomplement': SBNUCcomplement,       # Function to apply a complement to the first filter
         'morgan':morgan,
         'morgan_moving':morgan_moving,
@@ -150,10 +151,11 @@ def load_all_frames(args: dict) -> np.ndarray:
         noisy_frames = noisy_frames[stable_frame_number:stable_frame_number + n_to_compute]
         
         # Estimate the clean frames by applying a Gaussian filter to each noisy frame
-        clean_frames = np.array(
-            [frame_gauss_3x3_filtering(frame) for frame in tqdm(noisy_frames, desc="Estimating clean frame", unit="frame")], 
-            dtype=noisy_frames.dtype
-        )
+        # clean_frames = np.array(
+        #     [frame_gauss_3x3_filtering(frame) for frame in tqdm(noisy_frames, desc="Estimating clean frame", unit="frame")], 
+        #     dtype=noisy_frames.dtype
+        # )
+        clean_frames = morgan(noisy_frames)
 
     # Ensure noise is not None; if it is, initialize it with zeros of the same shape as clean_frames
     if noise is None:
@@ -219,10 +221,11 @@ if __name__ == "__main__":
     # If the user requested to show the video, display the estimated frames
     if args['show_video']:
         print(" --- Showing frames estimation --- ")
-        if n_to_compute == len(noisy_frames):
-            showing_all_estimated(estimated_frames=estimated_frames, framerate=args['framerate'])
-        else:
-            showing_all_estimated(estimated_frames=estimated_frames, framerate=args['framerate']/4)
+        showing_all_estimated(estimated_frames=estimated_frames, framerate=args['framerate'])
+        # if n_to_compute == len(noisy_frames):
+        #     showing_all_estimated(estimated_frames=estimated_frames, framerate=args['framerate'])
+        # else:
+        #     showing_all_estimated(estimated_frames=estimated_frames, framerate=args['framerate']/4)
 
     # Indicate the completion of the process
     print("DONE!")
