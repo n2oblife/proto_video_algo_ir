@@ -278,7 +278,7 @@ def apply_metrics(
     metrics = {metric: [] for metric in to_compute}
 
     # Iterate through frames and compute the specified metrics
-    for i in tqdm(range(len(enhanced_frames)), desc="Computing metrics", unit="frame"):
+    for i in tqdm(range(len(enhanced_frames)-1), desc="Computing metrics", unit="frame"):
         # Reshape arrays if necessary
         temp_original = reshape_array(original_frames[i])
         temp_enhanced = reshape_array(enhanced_frames[i])

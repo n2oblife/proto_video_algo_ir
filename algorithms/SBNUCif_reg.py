@@ -121,12 +121,15 @@ def SBNUCif_reg_frame_array(frame, frame_n_1, coeffs, lr=0.05, algo='FourierShif
     # Update coefficients and estimate corrected pixel values
     idi = np.arange(frame.shape[0]) - di
     jdj = np.arange(frame.shape[1]) - dj
-    valid = (0 <= idi) & (idi < frame.shape[0]) & (0 <= jdj) & (jdj < frame.shape[1])
-    Eij = frame_n_1[idi[valid], jdj[valid]] - frame[valid]
-    coeffs['o'][valid] += lr * Eij
+
+    valid_2d = np.zeros((frame.shape[0], frame.shape[1]), dtype=bool)
+    valid_2d[np.ix_((0 <= idi) & (idi < frame.shape[0]), (0 <= jdj) & (jdj < frame.shape[1]))] = True
+
+    Eij = frame_n_1[valid_2d] - frame[valid_2d]
+    coeffs['o'][valid_2d] += (lr * Eij).astype(coeffs['o'].dtype)
     if not offset_only:
-        coeffs['g'][valid] += lr * Eij * frame[valid]
-    all_Xest[valid] = Xest(coeffs['g'][valid], frame[valid], coeffs['o'][valid])
+        coeffs['g'][valid_2d] += (lr * Eij * frame[valid_2d]).astype(coeffs['g'].dtype)
+    all_Xest[valid_2d] = Xest(coeffs['g'][valid_2d], frame[valid_2d], coeffs['o'][valid_2d])
 
     return all_Xest.astype(frame.dtype), coeffs
 
@@ -251,7 +254,7 @@ def AdaSBNUCif_reg_frame_array(frame, frame_n_1, coeffs, lr=0.05, algo='FourierS
     # Update the coefficients and estimate the corrected pixel values
     idi = np.arange(frame.shape[0]) - di
     jdj = np.arange(frame.shape[1]) - dj
-    valid_indices = np.logical_and(np.logical_and(0 <= idi, idi < frame.shape[0]),
+    valid_indices = np.logical_and(np.logical_and(0 <= idi, idi < frame.shape[0])[:, np.newaxis],
                                    np.logical_and(0 <= jdj, jdj < frame.shape[1]))
     valid_indices &= update_nuc
     if np.any(valid_indices):
@@ -262,3 +265,4 @@ def AdaSBNUCif_reg_frame_array(frame, frame_n_1, coeffs, lr=0.05, algo='FourierS
     all_Xest = Xest(coeffs['g'], frame, coeffs['o'])
 
     return all_Xest, coeffs
+

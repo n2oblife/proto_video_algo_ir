@@ -460,10 +460,11 @@ def AdaSBNUCIRFPA_reg(
     coeffs_n_1 = init_nuc(frames[0])  # Initialize previous frame coefficients
 
     # Use tqdm to show progress while iterating through frames
-    for i in tqdm(range(len(frames)-1), desc="AdaSBNUCIRFPA processing", unit="frame"):
+    for i in tqdm(range(len(frames)-1), desc="AdaSBNUCIRFPA_reg processing", unit="frame"):
         # adaptative learning rate
         eta = K / (1+A*frame_var_filtering(frames[i], k_size)**2)
-        if 0<= eta <=1:
+        eta_valid = (0<= eta.all() <=1) if isinstance(eta, np.ndarray) else (0<= eta <=1)
+        if eta_valid:
             smoothed = frame_exp_window_filtering(image=frames[i], low_passed=smoothed, alpha=eta)
         else:
             smoothed = frame_exp_window_filtering(image=frames[i], low_passed=smoothed, alpha=0.01)

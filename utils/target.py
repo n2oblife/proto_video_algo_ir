@@ -162,7 +162,7 @@ def frame_gauss_3x3_filtering(image: list | np.ndarray) -> np.ndarray:
     elif isinstance(image, np.ndarray):
         def kernel_gauss_3x3_filtering_array(ker_3x3):
             gauss_ker = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]], dtype=ker_3x3.dtype)
-            return (1 / 16 * gauss_ker * ker_3x3).sum()
+            return (1 / 16 * gauss_ker * np.reshape(ker_3x3, (3, 3))).sum()
         return generic_filter(input=image, function=kernel_gauss_3x3_filtering_array, size=3, mode='reflect')
     else :
         raise NotImplementedError
@@ -243,7 +243,7 @@ def frame_sobel_3x3_filtering(image: list | np.ndarray) -> np.ndarray:
         def kernel_sobel_3x3_array(ker_3x3):
             sobel_ker_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=ker_3x3.dtype)
             sobel_ker_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]], dtype=ker_3x3.dtype)
-            return np.sqrt(((sobel_ker_x * ker_3x3)**2 + (sobel_ker_y * ker_3x3)**2).sum())
+            return np.sqrt(((sobel_ker_x * np.reshape(ker_3x3, (3, 3)))**2 + (sobel_ker_y * np.reshape(ker_3x3, (3, 3)))**2).sum())
         return generic_filter(input=image, function=kernel_sobel_3x3_array, size=3, mode='reflect')
     else :
         raise NotImplementedError
@@ -323,7 +323,7 @@ def frame_laplacian_3x3_filtering(image: list | np.ndarray) -> np.ndarray:
     elif isinstance(image, np.ndarray):
         def kernel_laplacian_3x3_array(ker_3x3):
             laplacian_ker = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=ker_3x3.dtype)
-            return (laplacian_ker * ker_3x3).sum()
+            return (laplacian_ker * np.reshape(ker_3x3, (3, 3))).sum()
         return generic_filter(input=image, function=kernel_laplacian_3x3_array, size=3, mode='reflect')
     else :
         raise NotImplementedError
@@ -407,7 +407,7 @@ def frame_military_3x3_filtering(image: list | np.ndarray) -> np.ndarray:
     elif isinstance(image, np.ndarray):
         def kernel_military_3x3_array(ker_3x3):
             military_ker = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]], dtype=ker_3x3.dtype)
-            return (military_ker * ker_3x3).sum()
+            return (military_ker * np.reshape(ker_3x3, (3, 3))).sum()
         return generic_filter(input=image, function=kernel_military_3x3_array, size=3, mode='reflect')
     else:
         raise NotImplementedError
@@ -899,7 +899,8 @@ def exp_window(
     Returns:
         float | np.ndarray: The updated smoothed value.
     """
-    if 0 <= alpha <= 1:
+    alpha_valid = ( 0<= alpha.all() <= 1) if isinstance(alpha, np.ndarray) else ( 0<= alpha <= 1)
+    if alpha_valid:
         # less computation : smoothed + alpha*(new_val - smoothed)
         return alpha*new_val + (1-alpha)*smoothed
     else:

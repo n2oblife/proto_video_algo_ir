@@ -220,14 +220,14 @@ def CstStatSBNUC_frame_array(
     # Update coefficients and estimate corrected pixel values
     if offset_only:
         # Update only the offset coefficient
-        _, corr_coeffs['o'], sbnuc_coeffs['s'], sbnuc_coeffs['m'] = constant_statistics_sbunc_update_nuc(
+        _, corr_coeffs['o'], sbnuc_coeffs['s'], sbnuc_coeffs['m'] = constant_statistics_sbunc_update_nuc_array(
             frame, frame_n_1,
             sbnuc_coeffs["s"], sbnuc_coeffs["m"],
             threshold, alpha
         )
     else:
         # Update both gain and offset coefficients
-        corr_coeffs['g'], corr_coeffs['o'], sbnuc_coeffs['s'], sbnuc_coeffs['m'] = constant_statistics_sbunc_update_nuc(
+        corr_coeffs['g'], corr_coeffs['o'], sbnuc_coeffs['s'], sbnuc_coeffs['m'] = constant_statistics_sbunc_update_nuc_array(
             frame, frame_n_1,
             sbnuc_coeffs["s"], sbnuc_coeffs["m"],
             threshold, alpha
@@ -235,6 +235,47 @@ def CstStatSBNUC_frame_array(
     all_Xest = Xest(corr_coeffs["g"], frame, corr_coeffs["o"])
 
     return all_Xest, corr_coeffs, sbnuc_coeffs
+
+def constant_statistics_sbunc_update_nuc_array(Y, Y_n_1, S_n_1, M_n_1, threshold=0, alpha=0.01):
+    """
+    Apply the constant_statistics_sbunc_update_nuc function element-wise to a 2D array.
+
+    Args:
+        Y (np.ndarray): Current frame.
+        Y_n_1 (np.ndarray): Previous frame.
+        S_n_1 (np.ndarray): Previous estimate of scene-based non-uniformity standard deviation.
+        M_n_1 (np.ndarray): Previous estimate of scene-based non-uniformity mean.
+        threshold (float, optional): Error threshold. Defaults to 0.
+        alpha (float, optional): Exponential weighting factor. Defaults to 0.5.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: Updated coefficients for the correction.
+
+            -> 1 / S_n: Updated gain NUC correction coefficient.
+
+            -> -M_n / S_n: Updated offset NUC correction coefficient.
+
+            -> S_n: Updated standard deviation.
+
+            -> M_n: Updated mean.
+    """
+    # Compute error between current and previous frames
+    error = compute_error(Y, Y_n_1)
+
+    # Create masks for pixels where error is above or below threshold
+    above_threshold = error >= threshold
+    below_threshold = error < threshold
+
+    # Update coefficients for pixels where error is above threshold
+    M_n = np.where(above_threshold, exp_window(M_n_1, Y, alpha), M_n_1)
+    S_n = np.where(above_threshold, exp_window(S_n_1, compute_error(Y, M_n), alpha), S_n_1)
+
+    # Compute updated gain and offset correction coefficients
+    gain_nuc = 1 / S_n
+    offset_nuc = -M_n / S_n
+
+    return gain_nuc, offset_nuc, S_n, M_n
+
 
 
 def SBNUCLMS_og(frames: list | np.ndarray, K=0.1, M=0.5, threshold=0, k_size=3, offset_only=True) -> np.ndarray:
