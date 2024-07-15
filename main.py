@@ -2,71 +2,9 @@ from utils.cv2_video_computation import *
 from utils.interract import *
 from utils.metrics import *
 from utils.target import *
-from algorithms.AdaSBNUCIRFPA import *
-from algorithms.SBNUCrgGLMS import *
-from algorithms.SBNUCif_reg import *
-from algorithms.NUCnlFilter import *
-from algorithms.SBNUC_smartCam import *
-from algorithms.RobustNUCIRFPA import *
-from algorithms.SBNUCcomplement import *
-# from algorithms.CompTempNUC import *
-from algorithms.morgan import *
 from noise_gen import apply_noise
 from utils.data_handling import *
-
-
-
-def build_nuc_algos():
-    """
-    Build a dictionary mapping SBNUC algorithm names to their corresponding functions.
-
-    This function creates and returns a dictionary where the keys are the names of different
-    Scene-Based Non-Uniformity Correction (SBNUC) algorithms, and the values are the functions
-    that implement these algorithms.
-
-    Returns:
-        dict: A dictionary mapping SBNUC algorithm names (str) to their corresponding functions.
-              The available algorithms are:
-              -> 'SBNUCIRFPA': Function for SBNUCIRFPA algorithm
-              -> 'AdaSBNUCIRFPA': Function for adaptive SBNUCIRFPA algorithm
-              -> 'AdaSBNUCIRFPA_reg': Function for adaptive SBNUCIRFPA with registration
-              -> 'CstStatSBNUC': Function for constant statistics SBNUC
-              -> 'SBNUCLMS': Function for SBNUCLMS algorithm
-              -> 'SBNUCif_reg': Function for SBNUC with interframe registration
-              -> 'AdaSBNUCif_reg': Function for adaptive SBNUC with interframe registration
-              -> 'CompTempNUC' : Function to compensate Temperature variations through NUC
-              -> 'NUCnlFilter' : Function to apply a non linear filter to the NUC
-              -> 'RobustNUCIRFPA' : Function to apply a robust NUC on IRFPA
-              -> 'AdaRobustNUCIRFPA' : Function to apply a robust NUC on IRFPA with adaptation
-              -> 'SBNUC_smartCam_pipeA' : Function to apply a NUC smart camera algorithm using pipeline A
-              -> 'SBNUC_smartCam_pipeB' : Function to apply a NUC smart camera algorithm using pipeline B
-              -> 'SBNUC_smartCam_pipeC' : Function to apply a NUC smart camera algorithm using pipeline C
-              -> 'SBNUCcomplement' : Function to apply a complement to the first filter
-    """
-    # TODO add new algos when implementation
-    return {
-        'SBNUCIRFPA': SBNUCIRFPA,                # Function for SBNUCIRFPA algorithm
-        'AdaSBNUCIRFPA': AdaSBNUCIRFPA,          # Function for adaptive SBNUCIRFPA algorithm
-        'AdaSBNUCIRFPA_reg': AdaSBNUCIRFPA_reg,  # Function for adaptive SBNUCIRFPA with registration
-        'CstStatSBNUC': CstStatSBNUC,            # Function for constant statistics SBNUC
-        'SBNUCLMS': SBNUCLMS,                    # Function for SBNUCLMS algorithm
-        'SBNUCif_reg': SBNUCif_reg,              # Function for SBNUC with interframe registration
-        'AdaSBNUCif_reg': AdaSBNUCif_reg,        # Function for adaptive SBNUC with interframe registration
-        # 'CompTempNUC': CompTempNUC,              # Function to compensate Temperature variations through NUC
-        # 'NUCnlFilter': NUCnlFilter,            # Function to apply a non linear filter to the NUC
-        'RobustNUCIRFPA': RobustNUCIRFPA,        # Function to apply a robust NUC on IRFPA
-        'AdaRobustNUCIRFPA': AdaRobustNUCIRFPA,  # Function to apply a robust NUC on IRFPA with adaptation
-        'SBNUC_smartCam_pipeA': SBNUC_smartCam_pipeA,  # Function to apply a NUC smart camera algorithm using pipeline A
-        'SBNUC_smartCam_pipeB': SBNUC_smartCam_pipeB,  # Function to apply a NUC smart camera algorithm using pipeline B
-        'SBNUC_smartCam_pipeC': SBNUC_smartCam_pipeC,  # Function to apply a NUC smart camera algorithm using pipeline C
-        'SBNUC_smartCam_own_pipe':SBNUC_smartCam_own_pipe, 
-        'SBNUCcomplement': SBNUCcomplement,       # Function to apply a complement to the first filter
-        'morgan':morgan,
-        'morgan_moving':morgan_moving,
-        'morgan_filt' : morgan_filt,
-        'morgan_filt_haut' : morgan_filt_haut
-    }
-
+from algorithms.morgan import morgan
 
 def apply_nuc_algorithms(
         frames: np.ndarray, 
@@ -163,6 +101,9 @@ def load_all_frames(args: dict) -> np.ndarray:
 
     return clean_frames, noisy_frames, n_to_compute, noise
 
+###
+# CLI
+###
 
 # python main.py -p C:/Users/zKanit/Pictures/sbnuc_offset -w 640 -he 480 -d 14b -fps 60 -n 60 --show_video --clean
 # python main.py -p C:\Users\zKanit\Pictures\***_no_nuc -save C:\Users\zKanit\Documents\***\proto_video_algo_ir\log -d 14b -nuc all -m all    

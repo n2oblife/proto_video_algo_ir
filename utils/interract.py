@@ -8,6 +8,60 @@ from functools import wraps
 from typing import Union, List, Any
 from copy import deepcopy
 import numpy as np
+import algorithms as alg
+
+# ONLY PLACE WHERE TO ADD NEW ALGO NAMES
+def build_nuc_algos():
+    """
+    Build a dictionary mapping SBNUC algorithm names to their corresponding functions.
+
+    This function creates and returns a dictionary where the keys are the names of different
+    Scene-Based Non-Uniformity Correction (SBNUC) algorithms, and the values are the functions
+    that implement these algorithms.
+
+    Returns:
+        dict: A dictionary mapping SBNUC algorithm names (str) to their corresponding functions.
+              The available algorithms are:
+              -> 'SBNUCIRFPA': Function for SBNUCIRFPA algorithm
+              -> 'AdaSBNUCIRFPA': Function for adaptive SBNUCIRFPA algorithm
+              -> 'AdaSBNUCIRFPA_reg': Function for adaptive SBNUCIRFPA with registration
+              -> 'CstStatSBNUC': Function for constant statistics SBNUC
+              -> 'SBNUCLMS': Function for SBNUCLMS algorithm
+              -> 'SBNUCif_reg': Function for SBNUC with interframe registration
+              -> 'AdaSBNUCif_reg': Function for adaptive SBNUC with interframe registration
+              -> 'CompTempNUC' : Function to compensate Temperature variations through NUC
+              -> 'NUCnlFilter' : Function to apply a non linear filter to the NUC
+              -> 'RobustNUCIRFPA' : Function to apply a robust NUC on IRFPA
+              -> 'AdaRobustNUCIRFPA' : Function to apply a robust NUC on IRFPA with adaptation
+              -> 'SBNUC_smartCam_pipeA' : Function to apply a NUC smart camera algorithm using pipeline A
+              -> 'SBNUC_smartCam_pipeB' : Function to apply a NUC smart camera algorithm using pipeline B
+              -> 'SBNUC_smartCam_pipeC' : Function to apply a NUC smart camera algorithm using pipeline C
+              -> 'SBNUCcomplement' : Function to apply a complement to the first filter
+    """
+    # TODO add new algos when implementation, only place
+    return {
+        'SBNUCIRFPA': alg.AdaSBNUCIRFPA.SBNUCIRFPA,                # Function for SBNUCIRFPA algorithm
+        'AdaSBNUCIRFPA': alg.AdaSBNUCIRFPA.AdaSBNUCIRFPA,          # Function for adaptive SBNUCIRFPA algorithm
+        'AdaSBNUCIRFPA_reg': alg.AdaSBNUCIRFPA.AdaSBNUCIRFPA_reg,  # Function for adaptive SBNUCIRFPA with registration
+        'CstStatSBNUC': alg.SBNUCrgGLMS.CstStatSBNUC,            # Function for constant statistics SBNUC
+        'SBNUCLMS': alg.SBNUCrgGLMS.SBNUCLMS,                    # Function for SBNUCLMS algorithm
+        'SBNUCif_reg': alg.SBNUCif_reg.SBNUCif_reg,              # Function for SBNUC with interframe registration
+        'AdaSBNUCif_reg': alg.SBNUCif_reg.AdaSBNUCif_reg,        # Function for adaptive SBNUC with interframe registration
+        # 'CompTempNUC': alg.ComptTempNUC.CompTempNUC,              # Function to compensate Temperature variations through NUC
+        # 'NUCnlFilter': alg.NUCnlFilter.NUCnlFilter,            # Function to apply a non linear filter to the NUC
+        'RobustNUCIRFPA': alg.RobustNUCIRFPA.RobustNUCIRFPA,        # Function to apply a robust NUC on IRFPA
+        'AdaRobustNUCIRFPA': alg.RobustNUCIRFPA.AdaRobustNUCIRFPA,  # Function to apply a robust NUC on IRFPA with adaptation
+        'SBNUC_smartCam_pipeA': alg.SBNUC_smartCam.SBNUC_smartCam_pipeA,  # Function to apply a NUC smart camera algorithm using pipeline A
+        'SBNUC_smartCam_pipeB': alg.SBNUC_smartCam.SBNUC_smartCam_pipeB,  # Function to apply a NUC smart camera algorithm using pipeline B
+        'SBNUC_smartCam_pipeC': alg.SBNUC_smartCam.SBNUC_smartCam_pipeC,  # Function to apply a NUC smart camera algorithm using pipeline C
+        'SBNUC_smartCam_own_pipe': alg.SBNUC_smartCam.SBNUC_smartCam_own_pipe, 
+        'SBNUCcomplement': alg.SBNUCcomplement.SBNUCcomplement,       # Function to apply a complement to the first filter
+        'morgan': alg.morgan.morgan,
+        'morgan_moving': alg.morgan.morgan_moving,
+        'morgan_filt' : alg.morgan.morgan_filt,
+        'morgan_filt_haut' : alg.morgan.morgan_filt_haut
+    }
+
 
 def set_logging_info(mode='default') -> None:
     """
@@ -372,22 +426,16 @@ def build_args():
         help="The size of the kernel to use for filtering. Must be an odd number"
     ))
 
-    # TODO work on handling of multiple algorithms at same time in motion estimation and work
     # Add parser option for the nuc adaptation algorithm
+    nuc_algos = [alg for alg in build_nuc_algos().keys()]
+    nuc_algos.append("all")
     parser_options.append(ParserOptions(
         long="nuc_algorithm", 
         short="nuc", 
         type=str, 
-        default="SBNUCIRFPA",
+        default="morgan",
         nargs='+', 
-        choices=['SBNUCIRFPA', 'AdaSBNUCIRFPA', 'AdaSBNUCIRFPA_reg',
-                 'CstStatSBNUC', 'SBNUCLMS', 'SBNUCif_reg', 'AdaSBNUCif_reg',
-                 'CompTempNUC', 'NUCnlFilter', 
-                 'RobustNUCIRFPA', 'AdaRobustNUCIRFPA', 
-                 'SBNUC_smartCam_pipeA', 'SBNUC_smartCam_pipeB', 'SBNUC_smartCam_pipeC',
-                 'SBNUC_smartCam_own_pipe', 'SBNUCcomplement', 
-                 'morgan', 'morgan_moving', 'morgan_filt', 'morgan_filt_haut',
-                 'all'], 
+        choices=nuc_algos, 
         help="Algorithms to use for nuc adaptation (can specify multiple)" 
     ))
 

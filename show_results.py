@@ -1,6 +1,7 @@
 from utils.interract import set_logging_info, build_args_show_result
 from utils.cv2_video_computation import show_video
 from utils.data_handling import load_data
+from main import build_nuc_algos
 
 if __name__ == "__main__":
     # Set up logging with INFO level to capture detailed runtime information
@@ -9,27 +10,7 @@ if __name__ == "__main__":
     # Parse command-line arguments to get user inputs
     args = build_args_show_result()
 
-    algos = [   
-        'clean_frames',
-        'noisy_frames',
-        'SBNUCIRFPA',
-        'AdaSBNUCIRFPA',
-        'AdaSBNUCIRFPA_reg',
-        'CstStatSBNUC',
-        'SBNUCLMS',
-        'SBNUCif_reg',
-        'AdaSBNUCif_reg',
-        'RobustNUCIRFPA',
-        'AdaRobustNUCIRFPA',
-        'SBNUC_smartCam_pipeA',
-        'SBNUC_smartCam_pipeB',
-        'SBNUC_smartCam_pipeC',
-        'SBNUCcomplement',
-        'morgan',
-        'morgan_moving',
-        'morgan_filt',
-        'morgan_filt_haut'
-    ]
+    algos = [algo for algo in build_nuc_algos().keys()] 
 
     while True:
         showing_input = input(f"Choose among these computed frames {algos}\n")

@@ -273,9 +273,15 @@ def SBNUC_smartCam_own_pipe_frame(
     Returns:
         tuple: (Estimated frame, updated pixel-level correction map, updated column-level correction map)
     """
+    # high_passed = frame_military_3x3_filtering(frame)
+    # # high_passed = frame_sobel_3x3_filtering(frame)
+    # m_k_p = SBNUC_smartCam_col_corr(frame, m_k_p, alpha_p)
+    # m_k_r = SBNUC_smartCam_row_corr(frame, m_k_r, alpha_p)
+    # m_k = frame_exp_window_filtering(high_passed, m_k, alpha)
+    # return SBNUC_smartCam_apply_col_corr(frame, m_k_p+m_k_r) - m_k, m_k, m_k_p, m_k_r
     high_passed = frame_military_3x3_filtering(frame)
-    # high_passed = frame_sobel_3x3_filtering(frame)
-    m_k_p = SBNUC_smartCam_col_corr(frame, m_k_p, alpha_p)
-    m_k_r = SBNUC_smartCam_row_corr(frame, m_k_r, alpha_p)
     m_k = frame_exp_window_filtering(high_passed, m_k, alpha)
-    return SBNUC_smartCam_apply_col_corr(frame, m_k_p+m_k_r) - m_k, m_k, m_k_p, m_k_r
+    corr_frame = frame - m_k
+    m_k_p = SBNUC_smartCam_col_corr(corr_frame, m_k_p, alpha_p)
+    m_k_r = SBNUC_smartCam_row_corr(corr_frame, m_k_r, alpha_p)
+    return SBNUC_smartCam_apply_col_corr(frame, m_k_p+m_k_r), m_k, m_k_p, m_k_r

@@ -4,8 +4,6 @@ import cv2
 import numpy as np
 from typing import Union, List
 from tqdm import tqdm
-from utils.interract import build_args
-from utils.cv2_video_computation import load_frames
 
 def OptFlow_estimation(frames: np.ndarray) -> np.ndarray:
     """
@@ -82,10 +80,3 @@ def OptFlow_estimation_frame(prev_frame: Union[np.ndarray, List[np.ndarray]], cu
     else:
         return np.array([0, 0], dtype=prev_frame.dtype)
 
-
-
-if __name__ == '__main__':
-    args = build_args()
-    frames = load_frames(args)
-    motion = OptFlow_estimation(frames)
-    print(f"Motion is : {motion}")
