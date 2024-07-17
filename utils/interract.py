@@ -48,7 +48,7 @@ def build_nuc_algos():
         'SBNUCif_reg': alg.SBNUCif_reg.SBNUCif_reg,              # Function for SBNUC with interframe registration
         'AdaSBNUCif_reg': alg.SBNUCif_reg.AdaSBNUCif_reg,        # Function for adaptive SBNUC with interframe registration
         # 'CompTempNUC': alg.ComptTempNUC.CompTempNUC,              # Function to compensate Temperature variations through NUC
-        # 'NUCnlFilter': alg.NUCnlFilter.NUCnlFilter,            # Function to apply a non linear filter to the NUC
+        'NUCnlFilter': alg.NUCnlFilter.NUCnlFilter,            # Function to apply a non linear filter to the NUC
         'RobustNUCIRFPA': alg.RobustNUCIRFPA.RobustNUCIRFPA,        # Function to apply a robust NUC on IRFPA
         'AdaRobustNUCIRFPA': alg.RobustNUCIRFPA.AdaRobustNUCIRFPA,  # Function to apply a robust NUC on IRFPA with adaptation
         'SBNUC_smartCam_pipeA': alg.SBNUC_smartCam.SBNUC_smartCam_pipeA,  # Function to apply a NUC smart camera algorithm using pipeline A
@@ -59,7 +59,8 @@ def build_nuc_algos():
         'morgan': alg.morgan.morgan,
         'morgan_moving': alg.morgan.morgan_moving,
         'morgan_filt' : alg.morgan.morgan_filt,
-        'morgan_filt_haut' : alg.morgan.morgan_filt_haut
+        'morgan_filt_haut' : alg.morgan.morgan_filt_haut,
+        'zac' : alg.zac.zac
     }
 
 

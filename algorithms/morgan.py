@@ -2,6 +2,7 @@ import numpy as np
 from tqdm import tqdm
 from motion.motion_estimation import *
 from utils.target import *
+from algorithms.NUCnlFilter import M_n
 
 
 def morgan(frames: list | np.ndarray, alpha = 0.01):
@@ -63,8 +64,9 @@ def morgan_moving(frames: list | np.ndarray, alpha = 0.01, algo='FourierShift', 
     # Use tqdm to show progress while iterating through frames
     for frame in tqdm(frames[1:], desc="morgan moving algo processing", unit="frame"):
         # Estimate the motion vector between the previous frame and the current frame
-        di, dj = motion_estimation_frame(prev_frame=frame_n_1, curr_frame=frame, algo=algo)
-        if np.sqrt(di**2+dj**2) > threshold :
+        # di, dj = motion_estimation_frame(prev_frame=frame_n_1, curr_frame=frame, algo=algo)
+        # if np.sqrt(di**2+dj**2) > threshold :
+        if M_n(frame=frame, frame_n_1=frame_n_1) : # motion estimation
             frame_est, img_nuc = morgan_frame(frame, img_nuc, alpha)
             all_frame_est.append(frame_est)
         else :
