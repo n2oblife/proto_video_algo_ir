@@ -8,6 +8,7 @@ from tqdm import tqdm
 from utils.common import *
 from utils.target import *
 from motion.motion_estimation import *
+from algorithms.NUCnlFilter import M_n
 
 def SBNUCcomplement(frames:list | np.ndarray):
     """
@@ -28,7 +29,7 @@ def SBNUCcomplement(frames:list | np.ndarray):
         all_frames_est.append(frame_est)
     return np.array(all_frames_est, dtype=frames.dtype)
 
-def SBNUCcomplement_frame(frame:list | np.ndarray, frame_n_1:list | np.ndarray, Cn:list | np.ndarray):
+def SBNUCcomplement_frame(frame:list | np.ndarray, frame_n_1:list | np.ndarray, Cn:list | np.ndarray=0):
     """
     Process a single frame using the SBNUCcomplement algorithm.
 
@@ -43,7 +44,8 @@ def SBNUCcomplement_frame(frame:list | np.ndarray, frame_n_1:list | np.ndarray, 
     wn = w_n(frame, frame_n_1)  # Compute the weight for the current frame
     Mx = frame_gauss_3x3_filtering(frame)  # Apply Gaussian filtering to the current frame
     Cn = exp_window(Cn, Mx, wn)  # Update the cumulative mean image
-    return frame - (Cn - np.mean(Cn)), Cn  # Return the estimated frame and updated cumulative mean image
+    frame_est = frame - (Cn - np.mean(Cn)) + 2**13
+    return np.where(frame_est<0, 0, frame_est), Cn  # Return the estimated frame and updated cumulative mean image
 
 def w_n(frame:list | np.ndarray, frame_n_1:list | np.ndarray, threshold=2):
     """
@@ -59,8 +61,9 @@ def w_n(frame:list | np.ndarray, frame_n_1:list | np.ndarray, threshold=2):
     """
     c = 50  # Proportionality constant
     phi = np.mean(frame_sobel_3x3_filtering(frame))  # Scene detail magnitude
-    dx, dy = motion_estimation_frame(frame, frame_n_1, algo='FourierShift')  # Motion estimation
-    if np.abs(dx**2 + dy**2) > threshold:  # Check if motion exceeds threshold
+    # dx, dy = motion_estimation_frame(frame, frame_n_1, algo='FourierShift')  # Motion estimation
+    # if np.abs(dx**2 + dy**2) > threshold:  # Check if motion exceeds threshold
+    if M_n(frame=frame, frame_n_1=frame_n_1):
         return phi / (phi + threshold / c)  # Compute the weight
     else:
         return 0  # If motion is below threshold, return zero weight

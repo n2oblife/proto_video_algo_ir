@@ -26,7 +26,7 @@ def morgan(frames: list | np.ndarray, alpha = 0.01):
 
     return np.array(all_frame_est, dtype=frames[0].dtype)
 
-def morgan_frame(frame, img_nuc, alpha = 0.01):
+def morgan_frame(frame, img_nuc=0, alpha = 0.01):
     """
     Perform SBNUCIRFPA on a single frame.
 

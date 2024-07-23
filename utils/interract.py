@@ -38,7 +38,7 @@ def build_nuc_algos():
               -> 'SBNUC_smartCam_pipeC' : Function to apply a NUC smart camera algorithm using pipeline C
               -> 'SBNUCcomplement' : Function to apply a complement to the first filter
     """
-    # TODO add new algos when implementation, only place
+    # TODO add new algos when implementation, only place with __init__.py
     return {
         'SBNUCIRFPA': alg.AdaSBNUCIRFPA.SBNUCIRFPA,                # Function for SBNUCIRFPA algorithm
         'AdaSBNUCIRFPA': alg.AdaSBNUCIRFPA.AdaSBNUCIRFPA,          # Function for adaptive SBNUCIRFPA algorithm
@@ -60,7 +60,15 @@ def build_nuc_algos():
         'morgan_moving': alg.morgan.morgan_moving,
         'morgan_filt' : alg.morgan.morgan_filt,
         'morgan_filt_haut' : alg.morgan.morgan_filt_haut,
-        'zac' : alg.zac.zac
+        'zac_NUCnlFilter' : alg.zac.zac_NUCnlFilter,
+        'zac_smartCam' : alg.zac.zac_smartCam,
+        'zac_AdaSBNUCIRFPA_window' : alg.zac.zac_AdaSBNUCIRFPA_window,
+        # 'zac_AdaSBNUCIRFPA_mean' : alg.zac.zac_AdaSBNUCIRFPA_mean,
+        'zac_RobustNUCIRFPA' : alg.zac.zac_RobustNUCIRFPA,
+        'zac_SBNUCcomplement' : alg.zac.zac_SBNUCcomplement,
+        'zac_CstStatSBNUC' : alg.zac.zac_CstStatSBNUC,
+        'zac_SBNUCLMS' : alg.zac.zac_SBNUCLMS,
+        'zac_AdaSBNUCif_reg' : alg.zac.zac_AdaSBNUCif_reg,
     }
 
 

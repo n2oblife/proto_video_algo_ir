@@ -514,9 +514,9 @@ def AdaSBNUCIRFPA_reg_frame_array(
     coeffs_n_1["o"] = coeffs["o"]
     
     # Update coefficients as sgd step
-    coeffs['o'] = coeffs['o'] - eta*e + alpha*(coeffs['o'] - o_n_1) + bias_o
+    coeffs['o'] = coeffs_n_1['o'] - eta*e + alpha*(coeffs_n_1['o'] - o_n_1) + bias_o
     if not offset_only:
-        coeffs['g'] = coeffs['g'] - eta*e*frame + alpha*(coeffs['g'] - g_n_1) + bias_g
+        coeffs['g'] = coeffs_n_1['g'] - eta*e*frame + alpha*(coeffs_n_1['g'] - g_n_1) + bias_g
     # Estimate corrected pixel value
     computed_frame = coeffs['g']*frame+coeffs['o']
     return np.where(computed_frame < 0, 0, computed_frame), coeffs, coeffs_n_1

@@ -7,7 +7,7 @@ from utils.interract import spinner_decorator
 
 def read_bin_file(file_path: str, width: int, height: int, channels: int = 3, depth: str = "8b") -> np.ndarray:
     """
-    Read a .bin file and convert it to an image frame.
+    Read a .bin video file and convert it to an image frame.
 
     Args:
         file_path (str): The path to the .bin file.

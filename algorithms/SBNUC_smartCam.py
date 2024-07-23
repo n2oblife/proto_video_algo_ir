@@ -35,7 +35,7 @@ def SBNUC_smartCam_pipeA(frames:list|np.ndarray, alpha=2**(-8), exp_window=True)
         all_frames_est.append(frame_est)
     return np.array(all_frames_est, dtype=frames[0].dtype)
 
-def SBNUC_smartCam_pipeA_frame(frame:list|np.ndarray, m_k, alpha=2**(-8),low_passed=None):
+def SBNUC_smartCam_pipeA_frame(frame:list|np.ndarray, m_k=0, alpha=2**(-8), low_passed=None):
     """
     Process a single frame using pipeline A.
 

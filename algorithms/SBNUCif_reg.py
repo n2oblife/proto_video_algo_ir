@@ -27,7 +27,7 @@ def SBNUCif_reg_og(frames, algo='FourierShift', lr=0.05, offset_only=True):
     coeffs = init_nuc(frame_n_1)  # Initialize NUC coefficients
 
     # Iterate through the frames starting from the second frame
-    for frame in tqdm(frames[1:], desc="CstStatSBNUC processing", unit="frame"):
+    for frame in tqdm(frames[1:], desc="SBNUC interframe register processing", unit="frame"):
         frame_est, coeffs = SBNUCif_reg_frame(frame, frame_n_1, coeffs, lr, algo, offset_only)
         all_frames_est.append(frame_est)
         frame_n_1 = frame  # Update the previous frame for motion detection
@@ -90,7 +90,7 @@ def SBNUCif_reg(frames, algo='FourierShift', lr=0.05, offset_only=True):
     coeffs = init_nuc(frame_n_1)  # Initialize NUC coefficients
 
     # Iterate through the frames starting from the second frame
-    for frame in tqdm(frames[1:], desc="CstStatSBNUC processing", unit="frame"):
+    for frame in tqdm(frames[1:], desc="SBNUC interframe register processing", unit="frame"):
         frame_est, coeffs = SBNUCif_reg_frame_array(frame, frame_n_1, coeffs, lr, algo, offset_only)
         all_frames_est.append(frame_est)
         frame_n_1 = frame  # Update the previous frame for motion detection
@@ -153,7 +153,7 @@ def AdaSBNUCif_reg_og(frames, algo='FourierShift', lr=0.05, offset_only=True):
     coeffs = init_nuc(frame_n_1)  # Initialize NUC coefficients
 
     # Iterate through the frames starting from the second frame
-    for frame in tqdm(frames[1:], desc="CstStatSBNUC processing", unit="frame"):
+    for frame in tqdm(frames[1:], desc="Adaptive SBNUC interframe register processing", unit="frame"):
         frame_est, coeffs = AdaSBNUCif_reg_frame(frame, frame_n_1, coeffs, lr, algo, offset_only)
         all_frames_est.append(frame_est)
         frame_n_1 = frame  # Update the previous frame for motion detection
@@ -220,7 +220,7 @@ def AdaSBNUCif_reg(frames, algo='FourierShift', lr=0.05, offset_only=True):
     coeffs = init_nuc(frame_n_1)  # Initialize NUC coefficients
 
     # Iterate through the frames starting from the second frame
-    for frame in tqdm(frames[1:], desc="CstStatSBNUC processing", unit="frame"):
+    for frame in tqdm(frames[1:], desc="Adaptive SBNUC interframe register processing", unit="frame"):
         frame_est, coeffs = AdaSBNUCif_reg_frame_array(frame, frame_n_1, coeffs, lr, algo, offset_only)
         all_frames_est.append(frame_est)
         frame_n_1 = frame  # Update the previous frame for motion detection
