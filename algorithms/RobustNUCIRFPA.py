@@ -129,9 +129,9 @@ def apply_eij_elementwise(error_image, k=3):
 def AdaRobustNUCIRFPA(
         frames: list | np.ndarray, 
         alpha_m=0.05,
+        ada=True,
         algo='FourierShift',
         offset_only=True, 
-        ada=True
     ):
     """
     Apply the Adaptive RobustNUCIRFPA algorithm to a sequence of frames.

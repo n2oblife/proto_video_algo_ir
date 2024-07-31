@@ -72,7 +72,7 @@ def SBNUCif_reg_frame(frame, frame_n_1, coeffs, lr=0.05, algo='FourierShift', of
         k+=1
     return np.array(all_Xest, dtype=frame.dtype), coeffs
 
-def SBNUCif_reg(frames, algo='FourierShift', lr=0.05, offset_only=True):
+def SBNUCif_reg(frames, lr=0.05, algo='FourierShift', offset_only=True):
     """
     Apply the Scene-Based Non-Uniformity Correction (SBNUC) algorithm with interframe registration to a sequence of frames.
 
@@ -202,7 +202,7 @@ def AdaSBNUCif_reg_frame(frame, frame_n_1, coeffs, lr=0.05, algo='FourierShift',
 
     return np.array(all_Xest, dtype=frame.dtype), coeffs
 
-def AdaSBNUCif_reg(frames, algo='FourierShift', lr=0.05, offset_only=True):
+def AdaSBNUCif_reg(frames, lr=0.05, algo='FourierShift', offset_only=True):
     """
     Apply the Adaptive Scene-Based Non-Uniformity Correction (AdaSBNUC) algorithm with interframe registration to a sequence of frames.
     
@@ -227,7 +227,7 @@ def AdaSBNUCif_reg(frames, algo='FourierShift', lr=0.05, offset_only=True):
     
     return np.array(all_frames_est, dtype=frames[0].dtype)
 
-def AdaSBNUCif_reg_frame_array(frame, frame_n_1, coeffs, lr=0.05, algo='FourierShift', offset_only=True):
+def AdaSBNUCif_reg_frame_array(frame, frame_n_1, coeffs, lr=0.01, algo='FourierShift', offset_only=True):
     """
     Apply the AdaSBNUC method to a single frame with interframe registration.
     Update the nuc coefficients only if motion distance is between 2 and 16.
@@ -248,21 +248,19 @@ def AdaSBNUCif_reg_frame_array(frame, frame_n_1, coeffs, lr=0.05, algo='FourierS
 
     update_nuc = (2 <= np.sqrt(di**2 + dj**2) <= 16)  # Update threshold from the paper
 
-    # Create an empty array to store the estimated pixel values
-    all_Xest = np.empty_like(frame)
+    # define overlaping areas
+    idi_min_n_1, idi_max_n_1 = max(0,-di), min(frame.shape[0]-1, frame.shape[0]-1 - di)
+    jdj_min_n_1, jdj_max_n_1 = max(0,-dj), min(frame.shape[1]-1, frame.shape[1]-1 - dj)    
+    
+    idi_min, idi_max = max(0,di), min(frame.shape[0]-1, frame.shape[0]-1 + di)
+    jdj_min, jdj_max = max(0,dj), min(frame.shape[1]-1, frame.shape[1]-1 + dj)
 
     # Update the coefficients and estimate the corrected pixel values
-    idi = np.arange(frame.shape[0]) - di
-    jdj = np.arange(frame.shape[1]) - dj
-    valid_indices = np.logical_and(np.logical_and(0 <= idi, idi < frame.shape[0])[:, np.newaxis],
-                                   np.logical_and(0 <= jdj, jdj < frame.shape[1]))
-    valid_indices &= update_nuc
-    if np.any(valid_indices):
-        Eij = frame_n_1[idi[valid_indices], jdj[valid_indices]] - frame[valid_indices]
-        coeffs['o'][valid_indices] += lr * Eij
+    if update_nuc:
+        Eij = frame_n_1[idi_min_n_1:idi_max_n_1, jdj_min_n_1:jdj_max_n_1] - frame[idi_min:idi_max, jdj_min:jdj_max]
+        coeffs['o'][idi_min:idi_max, jdj_min:jdj_max] += (lr * Eij).astype(coeffs['o'].dtype)
         if not offset_only:
-            coeffs['g'][valid_indices] += lr * Eij * frame[valid_indices]
-    all_Xest = Xest(coeffs['g'], frame, coeffs['o'])
+            coeffs['g'][idi_min:idi_max, jdj_min:jdj_max] += (lr * Eij * frame[idi_min:idi_max, jdj_min:jdj_max]).astype(coeffs['g'].dtype)
 
-    return all_Xest, coeffs
+    return Xest(coeffs['g'], frame, coeffs['o']).astype(frame.dtype), coeffs
 

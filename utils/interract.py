@@ -60,15 +60,19 @@ def build_nuc_algos():
         'morgan_moving': alg.morgan.morgan_moving,
         'morgan_filt' : alg.morgan.morgan_filt,
         'morgan_filt_haut' : alg.morgan.morgan_filt_haut,
+        'Adamorgan' : alg.morgan.Adamorgan,
         'zac_NUCnlFilter' : alg.zac.zac_NUCnlFilter,
         'zac_smartCam' : alg.zac.zac_smartCam,
         'zac_AdaSBNUCIRFPA_window' : alg.zac.zac_AdaSBNUCIRFPA_window,
-        # 'zac_AdaSBNUCIRFPA_mean' : alg.zac.zac_AdaSBNUCIRFPA_mean,
+        'zac_AdaSBNUCIRFPA_mean' : alg.zac.zac_AdaSBNUCIRFPA_mean,
+        'zac_AdaSBNUCIRFPA_reg' : alg.zac.zac_AdaSBNUCIRFPA_reg,
         'zac_RobustNUCIRFPA' : alg.zac.zac_RobustNUCIRFPA,
         'zac_SBNUCcomplement' : alg.zac.zac_SBNUCcomplement,
         'zac_CstStatSBNUC' : alg.zac.zac_CstStatSBNUC,
         'zac_SBNUCLMS' : alg.zac.zac_SBNUCLMS,
         'zac_AdaSBNUCif_reg' : alg.zac.zac_AdaSBNUCif_reg,
+        'zac_morgan' : alg.zac.zac_morgan,
+        'zac_Adamorgan' : alg.zac.zac_Adamorgan,
     }
 
 
@@ -468,6 +472,14 @@ def build_args():
         choices=['mse', 'psnr', 'roughness', 'ssim', 'cei', 'entropy', 'edge_preservation', 'nmse',
                  'all'], 
         help="Metrics to compute (can specify multiple)" 
+    ))
+
+    # enable to test 
+    parser_options.append(ParserOptions(
+        long="test_parameters",
+        short="t",
+        action="store_true",  # This makes it a boolean flag
+        help="Flzg to test multiple parameters values",
     ))
 
     # Parse the input arguments using the defined parser options

@@ -23,8 +23,8 @@ def init_S_M(
         dict[str, np.ndarray]: A dictionary containing the initial estimates for 's' (mean) and 'm' (MAD).
     """
     return {
-        "s": frame_mean_filtering(frame, k_size),   # Initialize the mean using frame mean filtering
-        "m": frame_mad_filtering(frame, k_size)     # Initialize the MAD using frame MAD filtering
+        "s": frame_mean_filtering(frame, k_size).astype(frame.dtype),   # Initialize the mean using frame mean filtering
+        "m": frame_mad_filtering(frame, k_size).astype(frame.dtype)     # Initialize the MAD using frame MAD filtering
     }
 
 
@@ -214,9 +214,6 @@ def CstStatSBNUC_frame_array(
     Returns:
         tuple[np.ndarray, dict[str, np.ndarray], dict[str, np.ndarray]]: The corrected frame and updated coefficients.
     """
-    # Initialize array to store estimated pixel values for the frame
-    all_Xest = np.empty_like(frame)
-
     # Update coefficients and estimate corrected pixel values
     if offset_only:
         # Update only the offset coefficient
@@ -232,9 +229,7 @@ def CstStatSBNUC_frame_array(
             sbnuc_coeffs["s"], sbnuc_coeffs["m"],
             threshold, alpha
         )
-    all_Xest = Xest(corr_coeffs["g"], frame, corr_coeffs["o"])
-
-    return all_Xest, corr_coeffs, sbnuc_coeffs
+    return Xest(corr_coeffs["g"], frame, corr_coeffs["o"]).astype(frame.dtype), corr_coeffs, sbnuc_coeffs
 
 def constant_statistics_sbunc_update_nuc_array(Y, Y_n_1, S_n_1, M_n_1, threshold=0, alpha=0.01):
     """
@@ -266,15 +261,19 @@ def constant_statistics_sbunc_update_nuc_array(Y, Y_n_1, S_n_1, M_n_1, threshold
     above_threshold = error >= threshold
     below_threshold = error < threshold
 
-    # Update coefficients for pixels where error is above threshold
-    M_n = np.where(above_threshold, exp_window(M_n_1, Y, alpha), M_n_1)
-    S_n = np.where(above_threshold, exp_window(S_n_1, compute_error(Y, M_n), alpha), S_n_1)
+    # Update coefficients for pixels where error is above threshold (og code)
+    # M_n = np.where(above_threshold, exp_window(M_n_1, Y, alpha), M_n_1)
+    # S_n = np.where(above_threshold, exp_window(S_n_1, compute_error(Y, M_n), alpha), S_n_1)
+
+    # Update coefficients for pixels where error is above threshold (change of code)
+    M_n = np.where(above_threshold, exp_window(Y, M_n_1, alpha), M_n_1)
+    S_n = np.where(above_threshold, exp_window(compute_error(Y, M_n), S_n_1, alpha), S_n_1)
 
     # Compute updated gain and offset correction coefficients
     gain_nuc = 1 / S_n
     offset_nuc = -M_n / S_n
 
-    return gain_nuc, offset_nuc, S_n, M_n
+    return gain_nuc.astype(Y.dtype), offset_nuc.astype(Y.dtype), S_n.astype(Y.dtype), M_n.astype(Y.dtype)
 
 
 

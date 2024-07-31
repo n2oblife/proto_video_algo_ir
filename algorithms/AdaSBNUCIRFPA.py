@@ -8,7 +8,7 @@ from utils.target import *
 
 def SBNUCIRFPA_og(
         frames: list | np.ndarray, 
-        eta: float | np.ndarray = 0.01, 
+        eta: float | np.ndarray = 0.005, 
         k_size=3, 
         offset_only=True
     ) -> np.ndarray:
@@ -40,7 +40,7 @@ def SBNUCIRFPA_og(
 def SBNUCIRFPA_frame(
         frame: list | np.ndarray, 
         coeffs: dict, 
-        eta: float | np.ndarray = 0.01, 
+        eta: float | np.ndarray = 0.005, 
         k_size=3, 
         offset_only = True
     ) -> tuple[list | np.ndarray, dict]:
@@ -86,7 +86,7 @@ def SBNUCIRFPA_frame(
 
 def SBNUCIRFPA(
         frames: list | np.ndarray, 
-        eta: float | np.ndarray = 0.01, 
+        eta: float | np.ndarray = 0.005, 
         offset_only=True
     ) -> np.ndarray:
     """
@@ -124,7 +124,7 @@ def SBNUCIRFPA_frame_array(
         frame: list | np.ndarray, 
         estimation_frame : list|np.ndarray, 
         coeffs: dict, 
-        eta: float | np.ndarray = 0.01, 
+        eta: float | np.ndarray = 0.005, 
         bias_g: float | np.ndarray = 0, 
         bias_o: float | np.ndarray = 0, 
         offset_only = True
@@ -148,15 +148,15 @@ def SBNUCIRFPA_frame_array(
     # estimation of the error compared to target
     e = estimation_frame - (coeffs['g']*frame + coeffs['o'])
     # Update coefficients as sgd step
-    coeffs['o'] = coeffs['o'] - eta*e + bias_o
+    coeffs['o'] = (coeffs['o'] - eta*e + bias_o).astype(coeffs['o'].dtype)
     if not offset_only:
-        coeffs['g'] = coeffs['g'] - eta*e*frame + bias_g
+        coeffs['g'] = (coeffs['g'] - eta*e*frame + bias_g).astype(coeffs['g'].dtype)
     # Estimate corrected pixel value
     computed_frame = coeffs['g']*frame+coeffs['o']
-    return np.where(computed_frame < 0, 0, computed_frame), coeffs
+    return np.where(computed_frame < 0, 0, computed_frame).astype(frame.dtype), coeffs
 
 
-def SBNUCIRFPA_update_nuc(subframe: list | np.ndarray, g: float | np.ndarray, o: float | np.ndarray, eta: float | np.ndarray = 0.01, bias_g: float | np.ndarray = 0, bias_o: float | np.ndarray = 0) -> tuple[float | np.ndarray, float | np.ndarray]:
+def SBNUCIRFPA_update_nuc(subframe: list | np.ndarray, g: float | np.ndarray, o: float | np.ndarray, eta: float | np.ndarray = 0.005, bias_g: float | np.ndarray = 0, bias_o: float | np.ndarray = 0) -> tuple[float | np.ndarray, float | np.ndarray]:
     """
     Update the non-uniformity correction coefficients using a subframe.
 
@@ -182,7 +182,7 @@ def SBNUCIRFPA_update_nuc(subframe: list | np.ndarray, g: float | np.ndarray, o:
     # Update coefficients using SGD
     return sgd_step(g, eta, e * yij, bias_g), sgd_step(o, eta, e, bias_o)
 
-def AdaSBNUCIRFPA_og(frames: list | np.ndarray, K: float | np.ndarray = 0.1, k_size=3, offset_only=True) -> np.ndarray:
+def AdaSBNUCIRFPA_og(frames: list | np.ndarray, K: float | np.ndarray = 0.01, k_size=3, offset_only=True) -> np.ndarray:
     """
     Apply the adaptive SBNUC method to a sequence of frames. Not optimized.
 
@@ -212,7 +212,7 @@ def AdaSBNUCIRFPA_og(frames: list | np.ndarray, K: float | np.ndarray = 0.1, k_s
 def AdaSBNUCIRFPA_frame(
         frame: list | np.ndarray, 
         coeffs: dict, 
-        K: float | np.ndarray = 0.1, 
+        K: float | np.ndarray = 0.01, 
         k_size=3, A=0.5,
         offset_only = True
     ) -> tuple[list | np.ndarray, dict]:
@@ -258,7 +258,7 @@ def AdaSBNUCIRFPA_frame(
             all_Xest[i].append(Xest(coeffs["g"][i][j], frame[i][j], coeffs["o"][i][j]))
     return np.array(all_Xest, dtype=frame.dtype), coeffs
 
-def AdaSBNUCIRFPA_eta_og(K: float, subframe: list | np.ndarray, A=0.5) -> float:
+def AdaSBNUCIRFPA_eta_og(K: float, subframe: list | np.ndarray) -> float:
     """
     Calculate the adaptive learning rate (eta) for SBNUC.
 
@@ -274,9 +274,9 @@ def AdaSBNUCIRFPA_eta_og(K: float, subframe: list | np.ndarray, A=0.5) -> float:
         float: The adaptive learning rate.
     """
     var = kernel_var_filtering(subframe)
-    return K / (1 + A*(var**2))
+    return K / (1 + (var**2))
 
-def AdaSBNUCIRFPA_eta(frame, k_size=3, K=0.1, A=0.5)->np.ndarray:
+def AdaSBNUCIRFPA_eta(frame, k_size=3, K=0.01)->np.ndarray:
     """
     This function calculates an adaptive learning rate, used in certain machine learning algorithms.
     The learning rate is calculated using a formula that involves the variance of the frame,
@@ -295,15 +295,15 @@ def AdaSBNUCIRFPA_eta(frame, k_size=3, K=0.1, A=0.5)->np.ndarray:
         The function uses the frame_var_filtering function to compute the variance of the frame.
     """
     # Calculate adaptive learning rate
-    return K / (1+A*frame_var_filtering(frame, k_size)**2)
+    eta = K / (1 + frame_var_filtering(frame, k_size)**2)
+    return np.where(eta < 0.005, 0.005, eta)
 
 
 
 def AdaSBNUCIRFPA(
         frames: list | np.ndarray, 
-        K: float | np.ndarray = 0.1, 
+        K: float | np.ndarray = 0.01, 
         k_size=3, 
-        A=0.5,
         offset_only=True
     ) -> np.ndarray:
     """
@@ -328,7 +328,7 @@ def AdaSBNUCIRFPA(
     # Use tqdm to show progress while iterating through frames
     for i in tqdm(range(len(frames)-1), desc="AdaSBNUCIRFPA processing", unit="frame"):
         # adaptative learning rate
-        eta = K / (1+A*frame_var_filtering(frames[i], k_size)**2)
+        eta = AdaSBNUCIRFPA_eta(frame=frames[i], k_size=k_size, K=K)
         # if 0<= eta <=1:
         #     smoothed = frame_exp_window_filtering(image=frames[i], low_passed=smoothed, alpha=eta)
         # else:
@@ -338,14 +338,14 @@ def AdaSBNUCIRFPA(
                                                    estimation_frame=smoothed,
                                                    eta=eta,
                                                    coeffs=coeffs,
-                                                   bias_o=2**13,
+                                                #    bias_o=2**13,
                                                    offset_only=offset_only)
         all_frame_est.append(frame_est)
     
     return np.array(all_frame_est, frames[0].dtype)
 
 
-def AdaSBNUCIRFPA_reg_og(frames: list | np.ndarray, K: float | np.ndarray = 0.1, alpha: float | np.ndarray = 0.05, k_size=3) -> list | np.ndarray:
+def AdaSBNUCIRFPA_reg_og(frames: list | np.ndarray, K: float | np.ndarray = 0.01, alpha: float | np.ndarray = 0.02, k_size=3) -> list | np.ndarray:
     """
     Apply the adaptive SBNUC method with regularization to a sequence of frames. Not optimized.
 
@@ -372,7 +372,7 @@ def AdaSBNUCIRFPA_reg_og(frames: list | np.ndarray, K: float | np.ndarray = 0.1,
 def AdaSBNUCIRFPA_reg_frame(
         frame: list | np.ndarray, 
         coeffs: dict, coeffs_n_1: dict, 
-        K: float | np.ndarray = 0.1, alpha: float | np.ndarray = 0.05, 
+        K: float | np.ndarray = 0.005, alpha: float | np.ndarray = 0.02, 
         k_size=3 , offset_only = True
     ) -> tuple[list | np.ndarray, dict, dict]:
     """
@@ -434,9 +434,9 @@ def AdaSBNUCIRFPA_reg_frame(
 
 def AdaSBNUCIRFPA_reg(
         frames: list | np.ndarray, 
-        K: float | np.ndarray = 0.1, 
+        K: float | np.ndarray = 0.01, 
+        alpha: float | np.ndarray = 0.02, 
         k_size=3, 
-        A=0.5,
         offset_only=True
     ) -> list | np.ndarray:
     """
@@ -462,7 +462,7 @@ def AdaSBNUCIRFPA_reg(
     # Use tqdm to show progress while iterating through frames
     for i in tqdm(range(len(frames)-1), desc="AdaSBNUCIRFPA_reg processing", unit="frame"):
         # adaptative learning rate
-        eta = K / (1+A*frame_var_filtering(frames[i], k_size)**2)
+        eta = AdaSBNUCIRFPA_eta(frames[i], k_size, K)
         eta_valid = (0<= eta.all() <=1) if isinstance(eta, np.ndarray) else (0<= eta <=1)
         if eta_valid:
             smoothed = frame_exp_window_filtering(image=frames[i], low_passed=smoothed, alpha=eta)
@@ -471,6 +471,7 @@ def AdaSBNUCIRFPA_reg(
         frame_est, coeffs, coeffs_n_1 = AdaSBNUCIRFPA_reg_frame_array(frame=frames[i],
                                                                       estimation_frame=smoothed,
                                                                       eta=eta,
+                                                                      alpha=alpha,
                                                                       coeffs=coeffs, coeffs_n_1=coeffs_n_1,
                                                                       bias_o=2**13,
                                                                       offset_only=offset_only)
@@ -482,8 +483,8 @@ def AdaSBNUCIRFPA_reg_frame_array(
         frame: list | np.ndarray, 
         estimation_frame : list|np.ndarray, 
         coeffs: dict, coeffs_n_1: dict,
-        eta: float | np.ndarray = 0.01,
-        alpha: float | np.ndarray = 0.05, 
+        eta: float | np.ndarray = 0.005,
+        alpha: float | np.ndarray = 0.02, 
         bias_g: float | np.ndarray = 0, 
         bias_o: float | np.ndarray = 0, 
         offset_only = True
@@ -518,5 +519,4 @@ def AdaSBNUCIRFPA_reg_frame_array(
     if not offset_only:
         coeffs['g'] = coeffs_n_1['g'] - eta*e*frame + alpha*(coeffs_n_1['g'] - g_n_1) + bias_g
     # Estimate corrected pixel value
-    computed_frame = coeffs['g']*frame+coeffs['o']
-    return np.where(computed_frame < 0, 0, computed_frame), coeffs, coeffs_n_1
+    return coeffs['g']*frame+coeffs['o'], coeffs, coeffs_n_1
