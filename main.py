@@ -50,26 +50,25 @@ if __name__ == "__main__":
             print("Invalid input. Please enter 'c' for clean frames or 'n' for noisy frames and 'all' for both of them.")
 
     # Apply non-uniformity correction (NUC) algorithms to the frames
-    estimated_frames_generator = apply_nuc_algorithms(frames=noisy_frames[:n_to_compute],
+    estimated_frames = {}
+    for estimated in apply_nuc_algorithms(frames=noisy_frames[:n_to_compute],
                                             algorithms=args['nuc_algorithm'],
                                             save_path=args['save_folder'],
                                             test_parameters=args['test_parameters'],
-                                            )
-    
+                                            ) :
+        # stores the estimated frames only if useful after
+        if args['metrics'] or args['show_video']:
+            estimated_frames[estimated[0]] = estimated[1]
     
     # Compute specified metrics for the estimated frames compared to the original frames
     if args['metrics']:
-        metrics = metrics_estimated(estimated_frames_generator, clean_frames, args['metrics'], args['save_folder'])
+        metrics = metrics_estimated(estimated_frames, clean_frames, args['metrics'], args['save_folder'])
         plot_metrics(metrics)
 
     # If the user requested to show the video, display the estimated frames
     if args['show_video']:
         print(" --- Showing frames estimation --- ")
-        showing_all_estimated(estimated_frames=estimated_frames_generator, framerate=args['framerate'])
-        # if n_to_compute == len(noisy_frames):
-        #     showing_all_estimated(estimated_frames=estimated_frames, framerate=args['framerate'])
-        # else:
-        #     showing_all_estimated(estimated_frames=estimated_frames, framerate=args['framerate']/4)
+        showing_all_estimated(estimated_frames=estimated_frames, framerate=args['framerate'])
 
     # Indicate the completion of the process
     print("DONE!")
