@@ -1,10 +1,13 @@
+# added files
+*.bin
+*.raw
+log/
+init_algo_ir.bat
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-*.bin
-*.raw
-log/
 
 # C extensions
 *.so

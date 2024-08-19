@@ -479,7 +479,7 @@ def build_args():
         long="test_parameters",
         short="t",
         action="store_true",  # This makes it a boolean flag
-        help="Flzg to test multiple parameters values",
+        help="Flag to test multiple parameters values",
     ))
 
     # Parse the input arguments using the defined parser options

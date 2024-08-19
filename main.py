@@ -4,7 +4,7 @@
 ###########################################################
 
 # python main.py -p C:/Users/zKanit/Pictures/sbnuc_offset -w 640 -he 480 -d 14b -fps 60 -n 60 --show_video --clean
-# python main.py -p C:\Users\zKanit\Pictures\***_no_nuc -save C:\Users\zKanit\Documents\***\proto_video_algo_ir\log -d 14b -nuc all -m all -s    
+# python main.py -p C:\Users\zKanit\Pictures\***_no_nuc -save C:\Users\zKanit\Documents\***\proto_video_algo_ir\log -d 14b -nuc all -m all -s -t    
 
 ###########################################################
 
@@ -20,6 +20,13 @@ if __name__ == "__main__":
 
     # Load video frames based on provided arguments
     if args['save_folder']:
+
+        # create folder if it doesn't exist
+        if not os.path.exists(args['save_folder']):
+            print(f"Folder {args['save_folder']} does not exist")
+            os.makedirs(args['save_folder'])
+            print(f"Folder {args['save_folder']} created")
+
         if check_files_exist(args['save_folder'], ['clean_frames.pkl', 'noisy_frames.pkl', 'noise.pkl']) == {'clean_frames.pkl': True, 'noisy_frames.pkl': True, 'noise.pkl': True}:
             clean_frames, noisy_frames, noise = load_data(args['save_folder'] + '/clean_frames.pkl'), load_data(args['save_folder'] + '/noisy_frames.pkl'), load_data(args['save_folder'] + '/noise.pkl')
             n_to_compute = min(len(clean_frames), args['num_frames'])
