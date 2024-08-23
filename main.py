@@ -9,6 +9,9 @@
 ###########################################################
 
 from utils.building_functions import *
+from utils.interract import set_logging_info, build_args
+from utils.metrics import metrics_estimated, plot_metrics
+from utils.cv2_video_computation import showing_all_estimated, show_video
 
 
 if __name__ == "__main__":
@@ -35,6 +38,11 @@ if __name__ == "__main__":
             save_frames(clean_frames, args['save_folder'] + '/clean_frames.pkl')
             save_frames(noisy_frames, args['save_folder'] + '/noisy_frames.pkl')
             save_frames(noise, args['save_folder'] + '/noise.pkl')
+        
+        if args['save_video']:
+            save_video_to_avi(frames=clean_frames, output_path=args['save_folder'] + '/clean_frames.avi', fps=args['framerate'], title='clean_frames')
+            save_video_to_avi(frames=noisy_frames, output_path=args['save_folder'] + '/noisy_frames.avi', fps=args['framerate'], title='noisy_frames')
+            save_video_to_avi(frames=noise, output_path=args['save_folder'] + '/noise.avi', fps=args['framerate'], title='noise')
     else:
         clean_frames, noisy_frames, n_to_compute, noise = load_all_frames(args)
 
@@ -62,6 +70,8 @@ if __name__ == "__main__":
                                             algorithms=args['nuc_algorithm'],
                                             save_path=args['save_folder'],
                                             test_parameters=args['test_parameters'],
+                                            save_video=args['save_video'],
+                                            fps=args['framerate']
                                             ) :
         # stores the estimated frames only if useful after
         if args['metrics'] or args['show_video']:

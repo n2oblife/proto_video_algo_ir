@@ -109,6 +109,7 @@ def zac_AdaSBNUCIRFPA_mean(
     all_frames_est = []      # List to store estimated (corrected) frames
     img_nuc = np.zeros(frames[0].shape, dtype=frames.dtype)
     frame_est_n_1 = np.zeros(frames[0].shape, dtype=frames.dtype)
+    coeffs = init_nuc(frames[0])
 
     for frame in tqdm(frames, desc="zac AdaSBNUCIRFPA meaned algorithm", unit="frame"):
         frame_est, img_nuc = alg.morgan.morgan_frame(frame, img_nuc)

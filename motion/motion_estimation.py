@@ -24,7 +24,7 @@ def build_motion_algo_dict():
     }
 
 
-def motion_estimation(frames: np.ndarray, algo: str| list[str] = 'OptFlow') -> np.ndarray:
+def motion_estimation(frames: np.ndarray, algo: str| list[str] = 'FourierShift') -> np.ndarray:
     """
     Estimate motion vectors between consecutive frames in a video sequence using a specified algorithm.
 
@@ -56,7 +56,7 @@ def motion_estimation(frames: np.ndarray, algo: str| list[str] = 'OptFlow') -> n
         # Call the selected motion estimation algorithm with the provided frames
         return np.concatenate(all_motion_vectors, axis=0)
 
-def motion_estimation_frame(prev_frame: np.ndarray, curr_frame: np.ndarray, algo: str = 'OptFlow') -> np.ndarray:
+def motion_estimation_frame(prev_frame: np.ndarray, curr_frame: np.ndarray, algo: str = 'FourierShift') -> np.ndarray:
     """
     Estimate the motion vector between two consecutive frames using a specified algorithm.
 

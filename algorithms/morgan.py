@@ -2,7 +2,9 @@ import numpy as np
 from tqdm import tqdm
 from motion.motion_estimation import *
 from utils.target import *
+from utils.data_handling import save_frames
 from algorithms.NUCnlFilter import M_n
+
 
 def morgan(frames: list | np.ndarray, alpha=0.01):
     """
@@ -210,3 +212,84 @@ def Adamorgan_frame(frame, img_nuc=0, K=2**-3, A=2**-8):
 
     # Use numpy's where function to set values less than 0 to 0
     return np.where(frame_est < 0, 0, frame_est).astype(frame.dtype), img_nuc.astype(frame.dtype)
+
+
+# TODO maybe lower alpha a bit because overlaping zone too effective
+def morgan_overlap(frames: list | np.ndarray, alpha=0.025, border_min=16, border_max=64, algo='FourierShift',):
+    all_frames_est = []
+    frame_n_1 = frames[0]  # Initialize with the first frame
+    img_nuc = np.full(shape=frames[0].shape, dtype=frames[0].dtype, fill_value=2**13)
+
+    # Use tqdm to show progress while iterating through frames
+    for frame in tqdm(frames[1:], desc="morgan overlap algo processing", unit="frame"):
+        frame_est, img_nuc = morgan_overlap_frame(
+            frame=frame, frame_n_1=frame_n_1,
+            img_nuc=img_nuc, alpha=alpha, algo=algo, border_min=border_min, border_max=border_max
+        )
+        all_frames_est.append(frame_est)
+        frame_n_1 = frame  # Update the previous frame for motion detection
+
+    return np.array(all_frames_est, dtype=frames[0].dtype)
+
+def morgan_overlap_frame(
+        frame: list | np.ndarray, frame_n_1: list | np.ndarray,
+        img_nuc=0, alpha=0.01, 
+        algo='FourierShift', border_min=16, border_max=64
+    ):
+
+    #estimate the frame anyway with not yet updated img_nuc
+    temp_frame = frame + 2**13 - img_nuc
+
+    # Estimate the motion vector between the previous frame and the current frame both enhanced
+    if algo == "OptFlow":
+        di, dj = motion_estimation_frame(prev_frame=frame_n_1.astype(np.uint8), curr_frame=temp_frame.astype(np.uint8), algo=algo).astype(np.int16)
+    else :
+        di, dj = motion_estimation_frame(prev_frame=frame_n_1, curr_frame=temp_frame, algo=algo)
+
+    # Update threshold from the paper
+    update_nuc = ((border_min <= np.sqrt(di**2 + dj**2) <= border_max) and dj!=0)
+
+    # Update the coefficients and estimate the corrected pixel values
+    if update_nuc:        
+        # define overlaping areas
+        idi_min_n_1, idi_max_n_1 = max(0,-di), min(frame.shape[0]-1, frame.shape[0]-1 - di)
+        jdj_min_n_1, jdj_max_n_1 = max(0,-dj), min(frame.shape[1]-1, frame.shape[1]-1 - dj)    
+        
+        idi_min, idi_max = max(0,di), min(frame.shape[0]-1, frame.shape[0]-1 + di)
+        jdj_min, jdj_max = max(0,dj), min(frame.shape[1]-1, frame.shape[1]-1 + dj)
+
+        # # #get error from one way and then the other way
+        # Eij = (2**13 + frame[idi_min:idi_max, jdj_min:jdj_max] - frame_n_1[idi_min_n_1:idi_max_n_1, jdj_min_n_1:jdj_max_n_1]).astype(frame.dtype)
+        # Eij_p = (2**13 + frame_n_1[idi_min_n_1:idi_max_n_1, jdj_min_n_1:jdj_max_n_1] - frame[idi_min:idi_max, jdj_min:jdj_max]).astype(frame.dtype)
+
+        # # Create a mask of the same shape as frame that is True where Eij is not computed and False otherwise
+        # mask = np.zeroes(frame.shape, dtype=bool)
+        # mask[idi_min:idi_max, jdj_min:jdj_max] = False
+
+        # # Perform Morgan algorithm on the frame
+        # img_nuc[idi_min:idi_max, jdj_min:jdj_max] = alpha * Eij + (1 - alpha) * img_nuc[idi_min:idi_max, jdj_min:jdj_max]
+        # img_nuc[mask] = alpha * Eij_p + (1 - alpha) * img_nuc[mask]
+        # img_nuc[idi_min_n_1:idi_max_n_1, jdj_min_n_1:jdj_max_n_1] = alpha * Eijp + (1 - alpha) * img_nuc[idi_min_n_1:idi_max_n_1, jdj_min_n_1:jdj_max_n_1]
+
+        # define overlaping area of both error matrix
+        idi_full_min, idi_full_max = max(idi_min_n_1, idi_min), min(idi_max_n_1, idi_max)
+        jdi_full_min, jdi_full_max = max(jdj_min_n_1, jdj_min), min(jdj_max_n_1, jdj_max)
+        
+        #get error from one way and then the other way
+        # EijFull = np.full(shape=frame.shape, dtype=frame.dtype, fill_value=-1) #pb of overflow
+        EijFull = np.full(shape=frame.shape, dtype=np.int32, fill_value=-1)
+        EijFull[idi_min:idi_max, jdj_min:jdj_max] = (2**13 + frame[idi_min:idi_max, jdj_min:jdj_max] - frame_n_1[idi_min_n_1:idi_max_n_1, jdj_min_n_1:jdj_max_n_1]).astype(frame.dtype)
+        EijFull[idi_min_n_1:idi_max_n_1, jdj_min_n_1:jdj_max_n_1] += (2**13 + frame_n_1[idi_min_n_1:idi_max_n_1, jdj_min_n_1:jdj_max_n_1] - frame[idi_min:idi_max, jdj_min:jdj_max]).astype(frame.dtype)
+        EijFull[idi_full_min:idi_full_max, jdi_full_min:jdi_full_max] = (EijFull[idi_full_min:idi_full_max, jdi_full_min:jdi_full_max] / 2).astype(frame.dtype)
+
+        # Perform gaussian window on the frame
+        img_nuc = np.where(
+            EijFull != -1, 
+            alpha*EijFull + (1-alpha)*img_nuc,
+            img_nuc
+            )
+
+    #estimate the frame anyway with updated img_nuc or not
+    # frame_est = frame + 2**13 - img_nuc
+
+    return np.where(temp_frame < 0, 0, temp_frame).astype(frame.dtype), img_nuc.astype(frame.dtype)

@@ -248,17 +248,19 @@ def AdaSBNUCif_reg_frame_array(frame, frame_n_1, coeffs, lr=0.01, algo='FourierS
 
     update_nuc = (2 <= np.sqrt(di**2 + dj**2) <= 16)  # Update threshold from the paper
 
-    # define overlaping areas
-    idi_min_n_1, idi_max_n_1 = max(0,-di), min(frame.shape[0]-1, frame.shape[0]-1 - di)
-    jdj_min_n_1, jdj_max_n_1 = max(0,-dj), min(frame.shape[1]-1, frame.shape[1]-1 - dj)    
-    
-    idi_min, idi_max = max(0,di), min(frame.shape[0]-1, frame.shape[0]-1 + di)
-    jdj_min, jdj_max = max(0,dj), min(frame.shape[1]-1, frame.shape[1]-1 + dj)
-
     # Update the coefficients and estimate the corrected pixel values
     if update_nuc:
+
+        # define overlaping areas
+        idi_min_n_1, idi_max_n_1 = max(0,-di), min(frame.shape[0]-1, frame.shape[0]-1 - di)
+        jdj_min_n_1, jdj_max_n_1 = max(0,-dj), min(frame.shape[1]-1, frame.shape[1]-1 - dj)    
+        
+        idi_min, idi_max = max(0,di), min(frame.shape[0]-1, frame.shape[0]-1 + di)
+        jdj_min, jdj_max = max(0,dj), min(frame.shape[1]-1, frame.shape[1]-1 + dj)
+
         Eij = frame_n_1[idi_min_n_1:idi_max_n_1, jdj_min_n_1:jdj_max_n_1] - frame[idi_min:idi_max, jdj_min:jdj_max]
         coeffs['o'][idi_min:idi_max, jdj_min:jdj_max] += (lr * Eij).astype(coeffs['o'].dtype)
+        
         if not offset_only:
             coeffs['g'][idi_min:idi_max, jdj_min:jdj_max] += (lr * Eij * frame[idi_min:idi_max, jdj_min:jdj_max]).astype(coeffs['g'].dtype)
 

@@ -1,0 +1,5 @@
+opencv-python
+scikit-image
+tdqm
+# Editable install with no version control (Test_MavLink==0.0.1)
+# -e c:\users\zkanit\documents\bertin_local\test_mavlink

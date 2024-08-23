@@ -38,7 +38,7 @@ def build_nuc_algos():
               -> 'SBNUC_smartCam_pipeC' : Function to apply a NUC smart camera algorithm using pipeline C
               -> 'SBNUCcomplement' : Function to apply a complement to the first filter
     """
-    # TODO add new algos when implementation, only place with __init__.py
+    # TODO add new algos when implementation, only place with __init__.py for new files
     return {
         'SBNUCIRFPA': alg.AdaSBNUCIRFPA.SBNUCIRFPA,                # Function for SBNUCIRFPA algorithm
         'AdaSBNUCIRFPA': alg.AdaSBNUCIRFPA.AdaSBNUCIRFPA,          # Function for adaptive SBNUCIRFPA algorithm
@@ -61,6 +61,7 @@ def build_nuc_algos():
         'morgan_filt' : alg.morgan.morgan_filt,
         'morgan_filt_haut' : alg.morgan.morgan_filt_haut,
         'Adamorgan' : alg.morgan.Adamorgan,
+        'morgan_overlap' : alg.morgan.morgan_overlap,
         'zac_NUCnlFilter' : alg.zac.zac_NUCnlFilter,
         'zac_smartCam' : alg.zac.zac_smartCam,
         'zac_AdaSBNUCIRFPA_window' : alg.zac.zac_AdaSBNUCIRFPA_window,
@@ -321,7 +322,7 @@ def build_args_show_result():
     # Parse the input arguments using the defined parser options
     args = parse_input(
         parser_config=parser_options,
-        prog_name="IR SBNUC prototypes"  # Program name for the parser
+        prog_name="show_result"  # Program name for the parser
     )
 
     print(" --- Input parsed --- ")  # Indicate that input has been successfully parsed
@@ -348,7 +349,7 @@ def build_args():
         short="p",
         type=str,
         help="The path to the folder containing all the binary files of the video",
-        required=True  # This argument is required
+        required=True
     ))
 
     # Add parser option for the folder path where to save results
@@ -364,7 +365,7 @@ def build_args():
         long="width",
         short="w",
         type=int,
-        default=640,  # Default width is set to 640
+        default=640, 
         help="The width of the video",
     ))
 
@@ -373,7 +374,7 @@ def build_args():
         long="height",
         short="he",
         type=int,
-        default=480,  # Default height is set to 480
+        default=480, 
         help="The height of the video",
     ))
 
@@ -382,9 +383,9 @@ def build_args():
         long="depth",
         short="d",
         type=str,
-        default="8b",  # Default bit depth is set to 8 bits
+        default="14b", 
         help="The bits' depth of the video",
-        choices=['8b', '14b', '16b', '32b', '64b', '128b', '256b'],  # Allowed choices for bit depth
+        choices=['8b', '14b', '16b', '32b', '64b', '128b', '256b'],
     ))
 
     # TODO fix pb of helper otput when declaring two flags
@@ -408,7 +409,7 @@ def build_args():
         long="num_frames",
         short="n",
         type=int,
-        default=np.inf,  # Default is None, which means process all frames
+        default=np.inf,
         help="The number of frames to compute"
     ))
 
@@ -417,7 +418,7 @@ def build_args():
         long="framerate",
         short="fps",
         type=float,
-        default=30,  # Default framerate is set to 60 FPS
+        default=30,
         help="The framerate per second for displaying the video"
     ))
 
@@ -435,7 +436,7 @@ def build_args():
         long="kernel_size",
         short="k",
         type=int,
-        default=3,  # Default framerate is set to 3 FPS
+        default=3,
         help="The size of the kernel to use for filtering. Must be an odd number"
     ))
 
@@ -482,6 +483,14 @@ def build_args():
         help="Flag to test multiple parameters values",
     ))
 
+    # enable to test 
+    parser_options.append(ParserOptions(
+        long="save_video",
+        short="video",
+        action="store_true",  # This makes it a boolean flag
+        help="Flag to save the video files",
+    ))
+
     # Parse the input arguments using the defined parser options
     args = parse_input(
         parser_config=parser_options,
@@ -491,47 +500,47 @@ def build_args():
     print(" --- Input parsed --- ")  # Indicate that input has been successfully parsed
     return args  # Return the parsed arguments
 
+# TODO for debug purpose
+# def animate(stop_event, messages):
+#     """Animate a spinner in the console with dynamic loading text.
 
-def animate(stop_event, messages):
-    """Animate a spinner in the console with dynamic loading text.
+#     Args:
+#     - stop_event (threading.Event): Event to signal when to stop the spinner.
+#     - messages (list): List of messages to display in sequence along with the spinner.
+#     """
+#     for message, c in zip(itertools.cycle(messages), itertools.cycle(['|', '/', '-', '\\'])):
+#         if stop_event.is_set():
+#             break
+#         sys.stdout.write(f'\r{message} {c}')
+#         sys.stdout.flush()
+#         time.sleep(0.1)
+#     sys.stdout.write(f'\r{message} -> Done! \n')
 
-    Args:
-    - stop_event (threading.Event): Event to signal when to stop the spinner.
-    - messages (list): List of messages to display in sequence along with the spinner.
-    """
-    for message, c in zip(itertools.cycle(messages), itertools.cycle(['|', '/', '-', '\\'])):
-        if stop_event.is_set():
-            break
-        sys.stdout.write(f'\r{message} {c}')
-        sys.stdout.flush()
-        time.sleep(0.1)
-    sys.stdout.write(f'\r{message} -> Done! \n')
+# def spinner_decorator(messages):
+#     """Decorator to show a spinner with dynamic loading text while a function is running.
+#     Args:
+#         messages (list): List of messages to display in sequence along with the spinner.
+#     """
+#     def decorator(func):
+#         @wraps(func)
+#         def wrapper(*args, **kwargs):
+#             # Create an event to control the spinner
+#             stop_event = threading.Event()
+#             # Start spinner thread
+#             t = threading.Thread(target=animate, args=(stop_event, messages))
+#             t.start()
+#             try:
+#                 # Run the actual function
+#                 result = func(*args, **kwargs)
+#             finally:
+#                 # Stop the spinner
+#                 stop_event.set()
+#                 # Ensure the spinner thread finishes
+#                 t.join()
+#             return result
+#         return wrapper
+#     return decorator
 
-def spinner_decorator(messages):
-    """Decorator to show a spinner with dynamic loading text while a function is running.
-
-    Args:
-        messages (list): List of messages to display in sequence along with the spinner.
-    """
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            # Create an event to control the spinner
-            stop_event = threading.Event()
-            # Start spinner thread
-            t = threading.Thread(target=animate, args=(stop_event, messages))
-            t.start()
-            try:
-                # Run the actual function
-                result = func(*args, **kwargs)
-            finally:
-                # Stop the spinner
-                stop_event.set()
-                # Ensure the spinner thread finishes
-                t.join()
-            return result
-        return wrapper
-    return decorator
 
 def dynamic_loading_bar(message="loading", total = 100):
     """Decorator to show a dynamic loading bar while a function is running.

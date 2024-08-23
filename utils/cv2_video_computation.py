@@ -2,7 +2,14 @@ import os
 import cv2
 import numpy as np
 from tqdm import tqdm
-from utils.interract import spinner_decorator
+
+
+from functools import wraps
+import threading
+import sys, warnings, logging
+import itertools
+import time
+# from utils.interract import spinner_decorator
 
 
 def read_bin_file(file_path: str, width: int, height: int, channels: int = 3, depth: str = "8b") -> np.ndarray:
@@ -223,6 +230,51 @@ def apply_lut(frame, lut):
             for j in range(len(frame[0])):
                 frame[i][j] = lut[frame[i][j]]
         return frame
+    
+# TODO for debug purpose
+
+
+def animate(stop_event, messages):
+    """Animate a spinner in the console with dynamic loading text.
+
+    Args:
+    - stop_event (threading.Event): Event to signal when to stop the spinner.
+    - messages (list): List of messages to display in sequence along with the spinner.
+    """
+    for message, c in zip(itertools.cycle(messages), itertools.cycle(['|', '/', '-', '\\'])):
+        if stop_event.is_set():
+            break
+        sys.stdout.write(f'\r{message} {c}')
+        sys.stdout.flush()
+        time.sleep(0.1)
+    sys.stdout.write(f'\r{message} -> Done! \n')
+
+def spinner_decorator(messages):
+    """Decorator to show a spinner with dynamic loading text while a function is running.
+
+    Args:
+        messages (list): List of messages to display in sequence along with the spinner.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Create an event to control the spinner
+            stop_event = threading.Event()
+            # Start spinner thread
+            t = threading.Thread(target=animate, args=(stop_event, messages))
+            t.start()
+            try:
+                # Run the actual function
+                result = func(*args, **kwargs)
+            finally:
+                # Stop the spinner
+                stop_event.set()
+                # Ensure the spinner thread finishes
+                t.join()
+            return result
+        return wrapper
+    return decorator
+############################
 
 @spinner_decorator(["showing frames"])
 def show_video(frames:list|np.ndarray|cv2.Mat, title='frames', frame_rate=30, equalize=True) -> None:
@@ -235,10 +287,10 @@ def show_video(frames:list|np.ndarray|cv2.Mat, title='frames', frame_rate=30, eq
         frame_rate (int, optional): The frame rate for displaying the video. Defaults to 30.
         equalize (bool, optional): Whether to apply histogram equalization using LUT. Defaults to True.
     """
-    i=0
+    # i=0
     # Display each frame
     for frame in frames:
-        i+=1
+        # i+=1
         # Apply LUT if lut is provided
         if equalize:
             lut = create_lut_from_frame(frame=frame, target='8b')
@@ -254,6 +306,14 @@ def show_video(frames:list|np.ndarray|cv2.Mat, title='frames', frame_rate=30, eq
 
     # Close all the frames
     cv2.destroyAllWindows()
+
+def show_frame(frame, title='frames', equalize=True):
+    # Apply LUT if lut is provided
+    if equalize:
+        lut = create_lut_from_frame(frame=frame, target='8b')
+        frame = apply_lut(frame, lut)
+    # Display the resulting frame
+    cv2.imshow(title, frame)
 
 def showing_all_estimated(estimated_frames, framerate):
     for algo in estimated_frames:
@@ -301,3 +361,67 @@ def load_frames(args: dict) -> list:
     return frames
 
 
+def save_video_to_mp4(frames, output_path, fps=30, title = 'frames', bit_depth=8):
+    """
+    Save a video in a NumPy array to an MP4 file using OpenCV.
+
+    Args:
+        frames (np.ndarray): The video as a NumPy array with shape (num_frames, height, width).
+        output_path (str): The path to save the output MP4 video.
+        fps (int, optional): The frames per second of the output video. Defaults to 30.
+        bit_depth (int, optional): The bit depth of the output video. Defaults to 8.
+    """
+    # Ensure the frames array has the correct shape
+    assert frames.ndim == 3, "The frames array should have shape (num_frames, height, width)"
+
+    # Add the channel dimension to the frames array
+    frames = np.expand_dims(frames, axis=-1)
+
+    # Get the height, width, and number of channels from the frames array
+    _, height, width, _ = frames.shape
+
+    # Create a VideoWriter object to write the video to a file
+    out = cv2.VideoWriter(output_path+f'_8b_{int(fps)}fps.mp4', cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height), isColor=False)
+
+    # Write each frame to the video
+    for frame in tqdm(frames, desc=f"Saving {title} to MP4", unit="frame"):
+        lut = create_lut_from_frame(frame=frame, target='8b')
+        frame = apply_lut(frame, lut)
+        out.write(frame)
+
+    # Release the VideoWriter object to close the file
+    print(f"{title} saved in : {output_path}_8b_{int(fps)}fps.mp4")
+    out.release()
+
+def save_video_to_avi(frames, output_path, fps=30, title='frames', bit_depth=8):
+    """
+    Save a video in a NumPy array to an AVI file using OpenCV.
+
+    Args:
+        frames (np.ndarray): The video as a NumPy array with shape (num_frames, height, width).
+        output_path (str): The path to save the output AVI video.
+        fps (int, optional): The frames per second of the output video. Defaults to 30.
+        title (str, optional): The title of the video. Defaults to 'frames'.
+        bit_depth (int, optional): The bit depth of the output video. Defaults to 8.
+    """
+    # Ensure the frames array has the correct shape
+    assert frames.ndim == 3, "The frames array should have shape (num_frames, height, width)"
+
+    # Add the channel dimension to the frames array
+    frames = np.expand_dims(frames, axis=-1)
+
+    # Get the height, width, and number of channels from the frames array
+    _, height, width, _ = frames.shape
+
+    # Create a VideoWriter object to write the video to a file
+    out = cv2.VideoWriter(output_path + f'_8b_{int(fps)}fps.avi', cv2.VideoWriter_fourcc(*'XVID'), fps, (width, height), isColor=False)
+
+    # Write each frame to the video
+    for frame in tqdm(frames, desc=f"Saving {title} to AVI", unit="frame"):
+        lut = create_lut_from_frame(frame=frame, target='8b')
+        frame = apply_lut(frame, lut)
+        out.write(frame)
+
+    # Release the VideoWriter object to close the file
+    print(f"{title} saved in: {output_path}_8b_{int(fps)}fps.avi")
+    out.release()

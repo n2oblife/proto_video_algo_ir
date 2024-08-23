@@ -1,9 +1,9 @@
-from utils.cv2_video_computation import *
-from utils.interract import *
-from utils.metrics import *
-from utils.target import *
+import numpy as np
+import os
+from utils.cv2_video_computation import load_frames, save_video_to_avi
+from utils.interract import build_nuc_algos
 from noise_gen import apply_noise
-from utils.data_handling import *
+from utils.data_handling import check_files_exist, load_data, save_frames
 from algorithms.morgan import morgan
 from itertools import product
 from typing import List, Dict, Generator
@@ -14,6 +14,8 @@ def apply_nuc_algorithms(
         algorithms: List[str]=['SBNUCIRFPA'],
         test_parameters=False,
         save_path: str = None,
+        save_video = False,
+        fps=30,
     ) -> Generator[Dict[str, Dict[str, float]], None, None]:
     """
     Apply multiple NUC algorithms to a sequence of frames with different parameter combinations and return the results.
@@ -57,21 +59,31 @@ def apply_nuc_algorithms(
 
                 if save_path:
                     # Create file name from the algo name and parameters names
-                    param_str = '_'.join(f"{k}_{v}" for k, v in current_params.items())
-                    file_name = f"{algo}_{param_str}.pkl"
+                    param_str = '_'+'_'.join(f"{k}_{v}" for k, v in current_params.items()) if test_parameters else ''
+                    file_name = f"{algo}{param_str}"
                     file_path = os.path.join(save_path, file_name)
 
-                    if check_files_exist(save_path, [file_name]):
-                        result = load_data(file_path)
+                    if check_files_exist(save_path, [file_name+'.pkl']):
+                        result = load_data(file_path+'.pkl')
                     else:
                         # Apply the algorithm to the frames with the current parameter combination
                         result = nuc_algorithms[algo](frames, **current_params)
                         save_frames(result, file_path)
+
+                    if save_video and check_files_exist(save_path, [file_name+'.avi']):
+                        save_video_to_avi(
+                            frames=result,
+                            output_path=file_path+'.avi',
+                            fps=fps,
+                            title=algo
+                        )
+
                 else:
                     # Apply the algorithm to the frames with the current parameter combination
                     result = nuc_algorithms[algo](frames, **current_params)
+                    file_name = algo
 
-                yield algo, result
+                yield file_name, result
         else:
             print(f"Warning: Algorithm '{algo}' is not recognized and will be skipped.")
 
@@ -160,6 +172,9 @@ def build_parameters(test_parameters = False, nuc_algo = []):
         'morgan_filt_haut' :        {'alpha' : [0.1, 0.01,  0.001, 0.0001, 0.00001, 0.000001, 0.0000001]},
         'Adamorgan' :               {'K' : [10000, 1000, 100, 10, 1, 0.1, 0.01, 0.001, 0.0001],
                                      'A' : [0.1, 0.01,  0.001, 0.0001, 0.00001, 0.000001, 0.0000001]},
+        'morgan_overlap' :          {'alpha' : [0.025, 0.02, 0.01, 0.0075, 0.005],
+                                     'border_min' : [2, 8, 16, 32],
+                                     'border_max' : [32, 64, 128, 256]},
         'zac_NUCnlFilter' :         {}, # no more parameter
         'zac_smartCam' :            {'alpha' : [0.1, 0.01,  0.001, 0.0001, 0.00001, 0.000001, 0.0000001], 
                                      'alpha_k' : [0.1, 0.01,  0.001, 0.0001, 0.00001, 0.000001, 0.0000001]},

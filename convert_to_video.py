@@ -1,7 +1,10 @@
-from utils.interract import set_logging_info, build_args_show_result
-from utils.cv2_video_computation import show_video
-from utils.data_handling import load_data
+import numpy as np
+import cv2
 import os
+from utils.interract import set_logging_info, build_args_show_result
+from utils.data_handling import load_data
+from tqdm import tqdm
+from utils.cv2_video_computation import save_video_to_mp4, save_video_to_avi
 
 def get_pkl_files(folder_path):
     """
@@ -33,24 +36,25 @@ if __name__ == "__main__":
     while True:
         print()
         showing_input = input(f"Choose among these computed frames {pkl_files}\n")
-        print()     
-           
+        print()
+
         if showing_input not in pkl_files and showing_input != "all":
-            input_break = input("You didn't choose an existing file, do you want to quit ? Y/n\n")
+            input_break = input("You didn't choose an existing file, do you want to quit? Y/n\n")
             if input_break != "n":
                 break
-        else :
+        else:
             try:
                 if showing_input == "all":
                     inputs = pkl_files
-                else :
+                else:
                     inputs = [showing_input]
                 for inp in inputs:
                     frames = load_data(args['folder_path'] + f'/{inp}.pkl')
-                    print(f" --- Showing {inp} frames --- ")
-                    show_video(frames=frames, 
-                            title=inp,
-                            frame_rate=args['framerate'])
+                    save_video_to_avi(
+                        frames, 
+                        output_path=args['folder_path'] + f'/{inp}', 
+                        fps=args['framerate'], 
+                        title=inp
+                        )
             except FileNotFoundError:
                 print(f"Sorry the file {showing_input}.pkl was not found.\n Please try again.\n")
-    
