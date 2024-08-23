@@ -39,10 +39,12 @@ if __name__ == "__main__":
             save_frames(noisy_frames, args['save_folder'] + '/noisy_frames.pkl')
             save_frames(noise, args['save_folder'] + '/noise.pkl')
         
-        if args['save_video']:
-            save_video_to_avi(frames=clean_frames, output_path=args['save_folder'] + '/clean_frames.avi', fps=args['framerate'], title='clean_frames')
-            save_video_to_avi(frames=noisy_frames, output_path=args['save_folder'] + '/noisy_frames.avi', fps=args['framerate'], title='noisy_frames')
-            save_video_to_avi(frames=noise, output_path=args['save_folder'] + '/noise.avi', fps=args['framerate'], title='noise')
+        if args['save_video'] and (not check_files_exist(args['save_folder'], ['clean_frames.avi'])):
+            save_video_to_avi(frames=clean_frames, output_path=args['save_folder'] + '/clean_frames', fps=args['framerate'], title='clean_frames')
+        if args['save_video'] and (not check_files_exist(args['save_folder'], ['noisy_frames.avi'])):
+            save_video_to_avi(frames=noisy_frames, output_path=args['save_folder'] + '/noisy_frames', fps=args['framerate'], title='noisy_frames')
+        if args['save_video'] and (not check_files_exist(args['save_folder'], ['noise.avi'])):
+            save_video_to_avi(frames=noise, output_path=args['save_folder'] + '/noise', fps=args['framerate'], title='noise')
     else:
         clean_frames, noisy_frames, n_to_compute, noise = load_all_frames(args)
 

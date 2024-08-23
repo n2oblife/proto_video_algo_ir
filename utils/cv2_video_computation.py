@@ -414,7 +414,8 @@ def save_video_to_avi(frames, output_path, fps=30, title='frames', bit_depth=8):
     _, height, width, _ = frames.shape
 
     # Create a VideoWriter object to write the video to a file
-    out = cv2.VideoWriter(output_path + f'_8b_{int(fps)}fps.avi', cv2.VideoWriter_fourcc(*'XVID'), fps, (width, height), isColor=False)
+    # out = cv2.VideoWriter(output_path + f'_8b_{int(fps)}fps.avi', cv2.VideoWriter_fourcc(*'XVID'), fps, (width, height), isColor=False)
+    out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'XVID'), fps, (width, height), isColor=False)
 
     # Write each frame to the video
     for frame in tqdm(frames, desc=f"Saving {title} to AVI", unit="frame"):
@@ -423,5 +424,5 @@ def save_video_to_avi(frames, output_path, fps=30, title='frames', bit_depth=8):
         out.write(frame)
 
     # Release the VideoWriter object to close the file
-    print(f"{title} saved in: {output_path}_8b_{int(fps)}fps.avi")
+    print(f"{title} saved in: {output_path}")
     out.release()

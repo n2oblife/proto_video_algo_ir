@@ -68,9 +68,9 @@ def apply_nuc_algorithms(
                     else:
                         # Apply the algorithm to the frames with the current parameter combination
                         result = nuc_algorithms[algo](frames, **current_params)
-                        save_frames(result, file_path)
+                        save_frames(result, file_path+'.pkl')
 
-                    if save_video and check_files_exist(save_path, [file_name+'.avi']):
+                    if save_video and (not check_files_exist(save_path, [file_name+'.avi'])):
                         save_video_to_avi(
                             frames=result,
                             output_path=file_path+'.avi',
