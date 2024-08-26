@@ -9,6 +9,7 @@ from typing import Union, List, Any
 from copy import deepcopy
 import numpy as np
 import algorithms as alg
+from utils.metrics import init_metrics
 
 # ONLY PLACE WHERE TO ADD NEW ALGO NAMES
 def build_nuc_algos():
@@ -21,22 +22,6 @@ def build_nuc_algos():
 
     Returns:
         dict: A dictionary mapping SBNUC algorithm names (str) to their corresponding functions.
-              The available algorithms are:
-              -> 'SBNUCIRFPA': Function for SBNUCIRFPA algorithm
-              -> 'AdaSBNUCIRFPA': Function for adaptive SBNUCIRFPA algorithm
-              -> 'AdaSBNUCIRFPA_reg': Function for adaptive SBNUCIRFPA with registration
-              -> 'CstStatSBNUC': Function for constant statistics SBNUC
-              -> 'SBNUCLMS': Function for SBNUCLMS algorithm
-              -> 'SBNUCif_reg': Function for SBNUC with interframe registration
-              -> 'AdaSBNUCif_reg': Function for adaptive SBNUC with interframe registration
-              -> 'CompTempNUC' : Function to compensate Temperature variations through NUC
-              -> 'NUCnlFilter' : Function to apply a non linear filter to the NUC
-              -> 'RobustNUCIRFPA' : Function to apply a robust NUC on IRFPA
-              -> 'AdaRobustNUCIRFPA' : Function to apply a robust NUC on IRFPA with adaptation
-              -> 'SBNUC_smartCam_pipeA' : Function to apply a NUC smart camera algorithm using pipeline A
-              -> 'SBNUC_smartCam_pipeB' : Function to apply a NUC smart camera algorithm using pipeline B
-              -> 'SBNUC_smartCam_pipeC' : Function to apply a NUC smart camera algorithm using pipeline C
-              -> 'SBNUCcomplement' : Function to apply a complement to the first filter
     """
     # TODO add new algos when implementation, only place with __init__.py for new files
     return {
@@ -74,6 +59,8 @@ def build_nuc_algos():
         'zac_AdaSBNUCif_reg' : alg.zac.zac_AdaSBNUCif_reg,
         'zac_morgan' : alg.zac.zac_morgan,
         'zac_Adamorgan' : alg.zac.zac_Adamorgan,
+        'STDyZforENUC' : alg.STDyZforENUC.STDyZforENUC,
+        # ...
     }
 
 
@@ -352,12 +339,33 @@ def build_args():
         required=True
     ))
 
+    # Add parser option for the nuc adaptation algorithm
+    nuc_algos = [alg for alg in build_nuc_algos().keys()]
+    nuc_algos.append("all")
+    parser_options.append(ParserOptions(
+        long="nuc_algorithm", 
+        short="nuc", 
+        type=str, 
+        default="morgan_overlap",
+        nargs='+', 
+        choices=nuc_algos, 
+        help="Algorithms to use for nuc adaptation (can specify multiple)" 
+    ))
+
     # Add parser option for the folder path where to save results
     parser_options.append(ParserOptions(
         long="save_folder",
         short="save",
         type=str,
         help="The path to the folder containing all results from this algorithm",
+    ))
+
+    #Saves the videos into a .avi file
+    parser_options.append(ParserOptions(
+        long="save_video",
+        short="video",
+        action="store_true",  # This makes it a boolean flag
+        help="Flag to save the video files into .avi files, needs -save <path>",
     ))
 
     # Add parser option for the width of the video
@@ -388,31 +396,6 @@ def build_args():
         choices=['8b', '14b', '16b', '32b', '64b', '128b', '256b'],
     ))
 
-    # TODO fix pb of helper otput when declaring two flags
-    # Add parser option for showing the video or not
-    parser_options.append(ParserOptions(
-        long="show_video",
-        short="s",
-        action="store_true",  # This makes it a boolean flag
-        help="Show the video if this flag is set",
-    ))
-    
-    parser_options.append(ParserOptions(
-        long="clean", 
-        short="c",
-        action="store_true", # This makes it a boolean flag
-        help="Flag to say if frames are clean or not", 
-    ))
-
-    # Add parser option for the number of frames to compute
-    parser_options.append(ParserOptions(
-        long="num_frames",
-        short="n",
-        type=int,
-        default=np.inf,
-        help="The number of frames to compute"
-    ))
-
     # Add parser option for the framerate per second
     parser_options.append(ParserOptions(
         long="framerate",
@@ -422,13 +405,12 @@ def build_args():
         help="The framerate per second for displaying the video"
     ))
 
-    # Add parser option for the begining of a stable frame
+    # Add parser option for showing the video or not
     parser_options.append(ParserOptions(
-        long="stable_frame",
-        short="st",
-        type=int,
-        default=0,
-        help="The begining of a stable scene"
+        long="show_video",
+        short="s",
+        action="store_true",  # This makes it a boolean flag
+        help="Show the video if this flag is set",
     ))
 
     # Add parser option for the kernel size
@@ -440,38 +422,15 @@ def build_args():
         help="The size of the kernel to use for filtering. Must be an odd number"
     ))
 
-    # Add parser option for the nuc adaptation algorithm
-    nuc_algos = [alg for alg in build_nuc_algos().keys()]
-    nuc_algos.append("all")
-    parser_options.append(ParserOptions(
-        long="nuc_algorithm", 
-        short="nuc", 
-        type=str, 
-        default="morgan",
-        nargs='+', 
-        choices=nuc_algos, 
-        help="Algorithms to use for nuc adaptation (can specify multiple)" 
-    ))
-
-    # Add parser option for the motion estimation algorithm
-    parser_options.append(ParserOptions(
-        long="motion_algorithm", 
-        short="mota", 
-        type=str,
-        default="FourierShift", 
-        nargs="+",
-        choices=['OptFlow', 'BlockMotion', 'FourierShift'], 
-        help="Algorithms to use for motion estimation (can specify multiple)"
-    ))
-
+    metrics_functions = [alg for alg in init_metrics().keys()]
+    metrics_functions.append("all")
     parser_options.append(ParserOptions(
         long="metrics", 
         short="m", 
         type=str, 
         # default=['mse', 'psnr'],  # Default metrics to compute
         nargs="+", 
-        choices=['mse', 'psnr', 'roughness', 'ssim', 'cei', 'entropy', 'edge_preservation', 'nmse',
-                 'all'], 
+        choices=metrics_functions, 
         help="Metrics to compute (can specify multiple)" 
     ))
 
@@ -483,63 +442,53 @@ def build_args():
         help="Flag to test multiple parameters values",
     ))
 
-    # enable to test 
-    parser_options.append(ParserOptions(
-        long="save_video",
-        short="video",
-        action="store_true",  # This makes it a boolean flag
-        help="Flag to save the video files",
-    ))
+    #TODO too much parsing disables the helper
+
+    # parser_options.append(ParserOptions(
+    #     long="clean", 
+    #     short="c",
+    #     action="store_true", # This makes it a boolean flag
+    #     help="Flag to say if frames are clean or not", 
+    # ))
+
+    # # Add parser option for the number of frames to compute
+    # parser_options.append(ParserOptions(
+    #     long="num_frames",
+    #     short="n",
+    #     type=int,
+    #     default=np.inf,
+    #     help="The number of frames to compute"
+    # ))
+
+    # # Add parser option for the begining of a stable frame
+    # parser_options.append(ParserOptions(
+    #     long="stable_frame",
+    #     short="st",
+    #     type=int,
+    #     default=0,
+    #     help="The begining of a stable scene"
+    # ))
+
+    # # Add parser option for the motion estimation algorithm
+    # parser_options.append(ParserOptions(
+    #     long="motion_algorithm", 
+    #     short="mota", 
+    #     type=str,
+    #     default="FourierShift", 
+    #     nargs="+",
+    #     choices=['OptFlow', 'BlockMotion', 'FourierShift'], 
+    #     help="Algorithms to use for motion estimation (can specify multiple)"
+    # ))
 
     # Parse the input arguments using the defined parser options
     args = parse_input(
         parser_config=parser_options,
-        prog_name="IR SBNUC prototypes"  # Program name for the parser
+        prog_name="python main.py",  # Program name for the parser
+        descr="This script tests algorithm on IR camera to preview its efficiency",
     )
 
     print(" --- Input parsed --- ")  # Indicate that input has been successfully parsed
     return args  # Return the parsed arguments
-
-# TODO for debug purpose
-# def animate(stop_event, messages):
-#     """Animate a spinner in the console with dynamic loading text.
-
-#     Args:
-#     - stop_event (threading.Event): Event to signal when to stop the spinner.
-#     - messages (list): List of messages to display in sequence along with the spinner.
-#     """
-#     for message, c in zip(itertools.cycle(messages), itertools.cycle(['|', '/', '-', '\\'])):
-#         if stop_event.is_set():
-#             break
-#         sys.stdout.write(f'\r{message} {c}')
-#         sys.stdout.flush()
-#         time.sleep(0.1)
-#     sys.stdout.write(f'\r{message} -> Done! \n')
-
-# def spinner_decorator(messages):
-#     """Decorator to show a spinner with dynamic loading text while a function is running.
-#     Args:
-#         messages (list): List of messages to display in sequence along with the spinner.
-#     """
-#     def decorator(func):
-#         @wraps(func)
-#         def wrapper(*args, **kwargs):
-#             # Create an event to control the spinner
-#             stop_event = threading.Event()
-#             # Start spinner thread
-#             t = threading.Thread(target=animate, args=(stop_event, messages))
-#             t.start()
-#             try:
-#                 # Run the actual function
-#                 result = func(*args, **kwargs)
-#             finally:
-#                 # Stop the spinner
-#                 stop_event.set()
-#                 # Ensure the spinner thread finishes
-#                 t.join()
-#             return result
-#         return wrapper
-#     return decorator
 
 
 def dynamic_loading_bar(message="loading", total = 100):

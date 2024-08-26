@@ -20,14 +20,14 @@ def init_metrics()->dict[str, list]:
               "edge_preservation", and "nmse".
     """
     return {
-        "mse": [],
-        "psnr": [],
-        "roughness": [],
-        "ssim": [],
-        "cei": [],
-        "entropy": [],
-        "edge_preservation": [],
-        "nmse": []
+        "mse"               : [],
+        "psnr"              : [],
+        "roughness"         : [],
+        "ssim"              : [],
+        "cei"               : [],
+        "entropy"           : [],
+        "edge_preservation" : [],
+        "nmse"              : []
         }
 
 def calculate_mse(original:np.ndarray, enhanced:np.ndarray)->float:

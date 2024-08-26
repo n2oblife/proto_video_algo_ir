@@ -28,8 +28,10 @@ def apply_nuc_algorithms(
         algorithms (List[str]): A list of algorithm names to apply.
         test_parameters (bool): Whether to use test parameters.
         save_path (str, optional): Path to save the results. Defaults to None.
+        save_video (bool, optional): Wether or not to save the frames into a video. Defaults to False.
+        fps (int, optional): Framerate of the video to save. Defaults to 30.
 
-    Returns:
+    Yields:
         Generator[Dict[str, Dict[str, float]], None, None]: A generator that yields dictionaries where the keys are the algorithm names and the values are dictionaries
                                                             containing the results of applying the corresponding algorithms to the frames
                                                             with different parameter combinations.
@@ -75,7 +77,7 @@ def apply_nuc_algorithms(
                             frames=result,
                             output_path=file_path+'.avi',
                             fps=fps,
-                            title=algo
+                            title=file_name
                         )
 
                 else:
