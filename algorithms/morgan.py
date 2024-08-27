@@ -6,9 +6,6 @@ from utils.data_handling import save_frames
 from algorithms.NUCnlFilter import M_n
 
 
-#TOOD debug
-import matplotlib.pyplot as plt
-
 def morgan(frames: list | np.ndarray, alpha=0.001):
     """
     Apply the Morgan algorithm to a sequence of frames for non-uniformity correction (NUC).
@@ -223,23 +220,15 @@ def morgan_overlap(frames: list | np.ndarray, alpha=0.025, border_min=16, border
     frame_n_1 = frames[0]  # Initialize with the first frame
     img_nuc = np.full(shape=frames[0].shape, dtype=frames[0].dtype, fill_value=2**13)
     
-    #TODO debug
-    overlap_list = []
+
     # Use tqdm to show progress while iterating through frames
     for frame in tqdm(frames[1:], desc="morgan overlap algo processing", unit="frame"):
-        frame_est, img_nuc, overlap_nuc = morgan_overlap_frame(
+        frame_est, img_nuc = morgan_overlap_frame(
             frame=frame, frame_n_1=frame_n_1,
             img_nuc=img_nuc, alpha=alpha, algo=algo, border_min=border_min, border_max=border_max
         )
         all_frames_est.append(frame_est)
         frame_n_1 = frame  # Update the previous frame for motion detection
-
-        #TODO debug
-        overlap_value = 1 if overlap_nuc else 0
-        overlap_list.append(overlap_value)
-
-    plt.plot(overlap_list)
-    plt.show()
 
     return np.array(all_frames_est, dtype=frames[0].dtype)
 
@@ -301,8 +290,4 @@ def morgan_overlap_frame(
             img_nuc
             )
 
-    #estimate the frame anyway with updated img_nuc or not
-    # frame_est = frame + 2**13 - img_nuc
-
-    #TODO debug returun bool
-    return np.where(temp_frame < 0, 0, temp_frame).astype(frame.dtype), img_nuc.astype(frame.dtype), update_nuc
+    return np.where(temp_frame < 0, 0, temp_frame).astype(frame.dtype), img_nuc.astype(frame.dtype)

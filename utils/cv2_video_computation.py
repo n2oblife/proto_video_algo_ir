@@ -230,8 +230,6 @@ def apply_lut(frame, lut):
             for j in range(len(frame[0])):
                 frame[i][j] = lut[frame[i][j]]
         return frame
-    
-# TODO for debug purpose
 
 
 def animate(stop_event, messages):

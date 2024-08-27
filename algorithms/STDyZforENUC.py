@@ -2,8 +2,6 @@ import numpy as np
 from tqdm import tqdm
 from motion.motion_estimation import *
 
-#TOOD debug
-import matplotlib.pyplot as plt
 
 def STDyZforENUC(
         frames: list | np.ndarray, 
@@ -17,13 +15,10 @@ def STDyZforENUC(
     img_nuc_gauss = np.full(shape=frames[0].shape, dtype=frames[0].dtype, fill_value=2**13)
     img_nuc_overlap = np.full(shape=frames[0].shape, dtype=frames[0].dtype, fill_value=2**13)
 
-    #TODO debug list
-    gauss_list, overlap_list = [], []
-
     # Use tqdm to show progress while iterating through frames
     for frame in tqdm(frames[1:], desc="STDyZforENUC algo processing", unit="frame"):
         
-        frame_est, frame_temp_n_1, img_nuc_gauss, img_nuc_overlap, bool_gauss, bool_overlap = STDyZforENUC_frame(
+        frame_est, frame_temp_n_1, img_nuc_gauss, img_nuc_overlap = STDyZforENUC_frame(
             frame=frame, og_frame_n_1=og_frame_n_1,
             frame_temp_n_1=frame_temp_n_1, enhanced_frame_n_1=frame_est_n_1, 
             alpha_gauss=alpha_gauss, alpha_overlap=alpha_overlap,
@@ -32,22 +27,11 @@ def STDyZforENUC(
             algo=algo,
         )
 
-        #TODO debug
-        gauss_value = 1 if bool_gauss else 0
-        overlap_value = 1 if bool_overlap else 0
-        gauss_list.append(gauss_value)
-        overlap_list.append(overlap_value)
-
         # Update the previous frame for motion detection and error computation
         frame_est_n_1 = frame_est
         og_frame_n_1 = frame
 
         all_frames_est.append(frame_est)
-
-    plt.plot(gauss_list)
-    plt.plot(overlap_list)
-    plt.show()
-
     return np.array(all_frames_est, dtype=frames[0].dtype)
 
 
@@ -60,15 +44,16 @@ def STDyZforENUC_frame(
     ):
 
     #estimate the frames anyway with not yet updated img_nuc
-    # frame_gauss = frame + 2**13 - img_nuc_gauss
-    # frame_overlap = frame_gauss + 2**13 - img_nuc_overlap
+    frame_gauss = frame + 2**13 - img_nuc_gauss
+    frame_overlap = frame_gauss + 2**13 - img_nuc_overlap
 
-    frame_overlap = frame + 2**13 - img_nuc_overlap
-    frame_gauss = frame_overlap + 2**13 - img_nuc_gauss
+    # frame_overlap = frame + 2**13 - img_nuc_overlap
+    # frame_gauss = frame_overlap + 2**13 - img_nuc_gauss
 
     # Estimate the motion vector between the previous frame and the current frame both enhanced
+    di, dj = motion_estimation_frame(prev_frame=og_frame_n_1, curr_frame=frame, algo=algo)
     # di, dj = motion_estimation_frame(prev_frame=enhanced_frame_n_1, curr_frame=frame_overlap, algo=algo)
-    di, dj = motion_estimation_frame(prev_frame=frame_temp_n_1, curr_frame=frame_overlap, algo=algo)
+    # di, dj = motion_estimation_frame(prev_frame=frame_temp_n_1, curr_frame=frame_overlap, algo=algo)
 
     # Update threshold from the paper
     vec_size = np.sqrt(di**2 + dj**2)
@@ -77,18 +62,17 @@ def STDyZforENUC_frame(
 
     # Perform gaussian mean algorithm on the frame
     if update_nuc_gauss :
-        # img_nuc_gauss = alpha_gauss * frame + (1 - alpha_gauss) * img_nuc_gauss
-        img_nuc_gauss = alpha_gauss * frame_overlap + (1 - alpha_gauss) * img_nuc_gauss
+        img_nuc_gauss = alpha_gauss * frame + (1 - alpha_gauss) * img_nuc_gauss
+        # img_nuc_gauss = alpha_gauss * frame_overlap + (1 - alpha_gauss) * img_nuc_gauss
 
     # Update the coefficients and estimate the corrected pixel values
     if update_nuc_overlap:        
-        # img_nuc_overlap = nuc_overlap_frame(frame=frame_gauss, frame_n_1=frame_gauss_n_1, di=di, dj=dj, img_nuc=img_nuc_overlap, alphap=alpha_overlap)
+        img_nuc_overlap = nuc_overlap_frame(frame=frame_gauss, frame_n_1=frame_temp_n_1, di=di, dj=dj, img_nuc=img_nuc_overlap, alphap=alpha_overlap)
         # img_nuc_overlap = nuc_overlap_frame(frame=frame, frame_n_1=og_frame_n_1, di=di, dj=dj, img_nuc=img_nuc_overlap, alpha=alpha_overlap)
-        img_nuc_overlap = nuc_overlap_frame(frame=frame_overlap, frame_n_1=frame_temp_n_1, di=di, dj=dj, img_nuc=img_nuc_overlap, alpha=alpha_overlap)
+        # img_nuc_overlap = nuc_overlap_frame(frame=frame_overlap, frame_n_1=frame_temp_n_1, di=di, dj=dj, img_nuc=img_nuc_overlap, alpha=alpha_overlap)
 
-    #TODO debug by returning update bool
-    # return np.where(frame_overlap < 0, 0, frame_overlap).astype(frame.dtype), np.where(frame_gauss < 0, 0, frame_gauss).astype(frame.dtype), img_nuc_gauss.astype(frame.dtype), img_nuc_overlap.astype(frame.dtype), update_nuc_gauss, update_nuc_overlap
-    return np.where(frame_gauss < 0, 0, frame_gauss).astype(frame.dtype), np.where(frame_overlap < 0, 0, frame_overlap).astype(frame.dtype), img_nuc_gauss.astype(frame.dtype), img_nuc_overlap.astype(frame.dtype), update_nuc_gauss, update_nuc_overlap
+    return np.where(frame_overlap < 0, 0, frame_overlap).astype(frame.dtype), np.where(frame_gauss < 0, 0, frame_gauss).astype(frame.dtype), img_nuc_gauss.astype(frame.dtype), img_nuc_overlap.astype(frame.dtype)#, update_nuc_gauss, update_nuc_overlap
+    # return np.where(frame_gauss < 0, 0, frame_gauss).astype(frame.dtype), np.where(frame_overlap < 0, 0, frame_overlap).astype(frame.dtype), img_nuc_gauss.astype(frame.dtype), img_nuc_overlap.astype(frame.dtype)#, update_nuc_gauss, update_nuc_overlap
 
 
 def nuc_overlap_frame(
