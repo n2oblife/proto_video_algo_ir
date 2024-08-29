@@ -55,8 +55,8 @@ def fourier_shift_frame(prev_frame: Union[np.ndarray, List[np.ndarray]], curr_fr
     curr_frame = reshape_array(curr_frame)
 
     # Compute the Fourier transform of the previous and current frames
-    prev_frame_fft = fft.fft2(np.array(prev_frame, dtype=np.uint8))
-    curr_frame_fft = fft.fft2(np.array(curr_frame, dtype=np.uint8))
+    prev_frame_fft = fft.fft2(np.array(prev_frame))
+    curr_frame_fft = fft.fft2(np.array(curr_frame))
 
     # Compute the cross-power spectrum
     cross_power_spectrum = np.conj(prev_frame_fft) * curr_frame_fft / (np.abs(prev_frame_fft) * np.abs(curr_frame_fft))

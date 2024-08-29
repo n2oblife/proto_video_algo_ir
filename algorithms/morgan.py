@@ -216,6 +216,19 @@ def Adamorgan_frame(frame, img_nuc=0, K=2**-3, A=2**-8):
 
 # TODO maybe lower alpha a bit because overlaping zone too effective
 def morgan_overlap(frames: list | np.ndarray, alpha=0.025, border_min=16, border_max=64, algo='FourierShift',):
+    """
+    This function performs the Morgan overlap algorithm on a sequence of frames.
+
+    Args:
+        frames (list | np.ndarray): The input sequence of frames.
+        alpha (float, optional): The update rate for the nucleus image. Defaults to 0.025.
+        border_min (int, optional): The minimum border size for updating the nucleus image. Defaults to 16.
+        border_max (int, optional): The maximum border size for updating the nucleus image. Defaults to 64.
+        algo (str, optional): The algorithm to use for motion estimation. Defaults to 'FourierShift'.
+
+    Returns:
+        np.ndarray: The sequence of estimated frames.
+    """
     all_frames_est = []
     frame_n_1 = frames[0]  # Initialize with the first frame
     img_nuc = np.full(shape=frames[0].shape, dtype=frames[0].dtype, fill_value=2**13)
@@ -228,7 +241,7 @@ def morgan_overlap(frames: list | np.ndarray, alpha=0.025, border_min=16, border
             img_nuc=img_nuc, alpha=alpha, algo=algo, border_min=border_min, border_max=border_max
         )
         all_frames_est.append(frame_est)
-        frame_n_1 = frame  # Update the previous frame for motion detection
+        frame_n_1 = frame_est  # Update the previous frame for motion detection
 
     return np.array(all_frames_est, dtype=frames[0].dtype)
 
@@ -237,6 +250,21 @@ def morgan_overlap_frame(
         img_nuc=0, alpha=0.01, 
         algo='FourierShift', border_min=16, border_max=64
     ):
+    """
+    This function performs the Morgan overlap algorithm on a single frame.
+
+    Args:
+        frame (list | np.ndarray): The current frame.
+        frame_n_1 (list | np.ndarray): The previous frame.
+        img_nuc (int, optional): The initial nucleus image. Defaults to 0.
+        alpha (float, optional): The update rate for the nucleus image. Defaults to 0.01.
+        algo (str, optional): The algorithm to use for motion estimation. Defaults to 'FourierShift'.
+        border_min (int, optional): The minimum border size for updating the nucleus image. Defaults to 16.
+        border_max (int, optional): The maximum border size for updating the nucleus image. Defaults to 64.
+
+    Returns:
+        tuple: The estimated frame and the updated nucleus image.
+    """
 
     #estimate the frame anyway with not yet updated img_nuc
     temp_frame = frame + 2**13 - img_nuc
